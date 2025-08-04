@@ -1,0 +1,44 @@
+[
+  {
+    "epic": "Phase 1: 后端搭建 (FastAPI + SQLite)",
+    "tasks": [
+      { "id": "T01", "task": "初始化 FastAPI 项目，安装所需依赖", "status": "todo", "priority": "high" },
+      { "id": "T02", "task": "定义 Pydantic 数据模型 (Teacher, Appointment, Review)", "status": "todo", "priority": "high" },
+      { "id": "T03", "task": "配置 SQLite 数据库，并编写数据库初始化脚本（用于创建表）", "status": "todo", "priority": "high" },
+      { "id": "T04", "task": "编写数据填充脚本，将原有的 mockTeachers 数据导入 SQLite 数据库", "status": "todo", "priority": "high" },
+      { "id": "T05", "task": "实现教师相关 API: GET /api/teachers, GET /api/teachers/{id}", "status": "todo", "priority": "high" },
+      { "id": "T06", "task": "实现预约相关 API: GET /api/appointments, POST /api/appointments", "status": "todo", "priority": "medium" },
+      { "id": "T07", "task": "实现评价相关 API: GET /api/teachers/{id}/reviews, POST /api/teachers/{id}/reviews", "status": "todo", "priority": "medium" }
+    ]
+  },
+  {
+    "epic": "Phase 2: 前端基础迁移与路由设置",
+    "tasks": [
+      { "id": "T11", "task": "基于现有代码创建 Vite + React + TS 项目结构", "status": "todo", "priority": "high" },
+      { "id": "T12", "task": "将现有 App 组件拆分为独立的页面组件 (HomePage, TeacherListPage, TeacherDetailPage, AppointmentsPage)", "status": "todo", "priority": "high" },
+      { "id": "T13", "task": "安装并配置 React Router，设置页面路由", "status": "todo", "priority": "high" },
+      { "id": "T14", "task": "创建共享的 Header/Navbar 组件", "status": "todo", "priority": "medium" },
+      { "id": "T15", "task": "在 Header 中添加一个简单的按钮，用于模拟“学生/教师”视角切换 (使用 Zustand 管理全局状态)", "status": "todo", "priority": "low" }
+    ]
+  },
+  {
+    "epic": "Phase 3: 前后端数据联调",
+    "tasks": [
+      { "id": "T21", "task": "在教师列表页使用 TanStack Query 从 GET /api/teachers 获取数据，替换 mock data", "status": "todo", "priority": "high" },
+      { "id": "T22", "task": "在教师详情页根据路由参数，从 GET /api/teachers/{id} 获取数据", "status": "todo", "priority": "high" },
+      { "id": "T23", "task": "在教师详情页下方，从 GET /api/teachers/{id}/reviews 获取并展示评价列表", "status": "todo", "priority": "medium" },
+      { "id": "T24", "task": "创建“我的预约”页面，从 GET /api/appointments 获取并展示所有预约", "status": "todo", "priority": "high" }
+    ]
+  },
+  {
+    "epic": "Phase 4: 实现核心交互功能",
+    "tasks": [
+      { "id": "T31", "task": "创建预约表单组件 (Modal 或 页面内表单)", "status": "todo", "priority": "high" },
+      { "id": "T32", "task": "实现预约功能，点击“立即预约”后，提交表单数据到 POST /api/appointments", "status": "todo", "priority": "high" },
+      { "id": "T33", "task": "创建评价表单组件", "status": "todo", "priority": "medium" },
+      { "id": "T34", "task": "在“我的预约”页面，为每条记录添加“评价”按钮，点击后提交评价到 POST /api/teachers/{id}/reviews", "status": "todo", "priority": "medium" },
+      { "id": "T35", "task": "实现前端的搜索、筛选和排序逻辑", "status": "todo", "priority": "medium" },
+      { "id": "T36", "task": "完成 MVP 的最终 UI/UX 审查和清理", "status": "todo", "priority": "low" }
+    ]
+  }
+]
