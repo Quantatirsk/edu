@@ -8,8 +8,8 @@ export interface UseFormValidationOptions {
   showErrorsOnSubmit?: boolean;
 }
 
-export interface FormValidationState {
-  values: { [field: string]: any };
+export interface FormValidationState<T = Record<string, unknown>> {
+  values: T;
   errors: { [field: string]: string };
   touched: { [field: string]: boolean };
   isSubmitting: boolean;
@@ -17,9 +17,9 @@ export interface FormValidationState {
   isValid: boolean;
 }
 
-export interface FormValidationActions {
-  setValue: (field: string, value: any) => void;
-  setValues: (values: { [field: string]: any }) => void;
+export interface FormValidationActions<T = Record<string, unknown>> {
+  setValue: <K extends keyof T>(field: K, value: T[K]) => void;
+  setValues: (values: Partial<T>) => void;
   setError: (field: string, error: string) => void;
   setErrors: (errors: { [field: string]: string }) => void;
   clearError: (field: string) => void;
@@ -28,17 +28,17 @@ export interface FormValidationActions {
   touchFields: (fields: string[]) => void;
   validateField: (field: string) => Promise<boolean>;
   validateForm: () => Promise<boolean>;
-  resetForm: (values?: { [field: string]: any }) => void;
-  handleSubmit: (onSubmit: (values: any) => void | Promise<void>) => (e?: React.FormEvent) => Promise<void>;
+  resetForm: (values?: Partial<T>) => void;
+  handleSubmit: (onSubmit: (values: T) => void | Promise<void>) => (e?: React.FormEvent) => Promise<void>;
 }
 
-export interface UseFormValidationReturn extends FormValidationState, FormValidationActions {}
+export interface UseFormValidationReturn<T = Record<string, unknown>> extends FormValidationState<T>, FormValidationActions<T> {}
 
-export const useFormValidation = (
-  initialValues: { [field: string]: any },
+export const useFormValidation = <T extends object>(
+  initialValues: T,
   validationRules: FormValidationRules,
   options: UseFormValidationOptions = {}
-): UseFormValidationReturn => {
+): UseFormValidationReturn<T> => {
   const {
     validateOnChange = true,
     validateOnBlur = true,
@@ -46,7 +46,7 @@ export const useFormValidation = (
   } = options;
 
   // 状态管理
-  const [values, setValuesState] = useState(initialValues);
+  const [values, setValuesState] = useState<T>(initialValues);
   const [errors, setErrorsState] = useState<{ [field: string]: string }>({});
   const [touched, setTouchedState] = useState<{ [field: string]: boolean }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,12 +62,12 @@ export const useFormValidation = (
   }, [errors]);
 
   // 设置单个字段值
-  const setValue = useCallback((field: string, value: any) => {
-    setValuesState(prev => ({ ...prev, [field]: value }));
+  const setValue = useCallback(<K extends keyof T>(field: K, value: T[K]) => {
+    setValuesState(prev => ({ ...prev, [field]: value } as T));
 
     // 如果启用了实时验证且字段已被触摸
-    if (validateOnChange && touched[field]) {
-      const error = validator.validateField(field, value);
+    if (validateOnChange && touched[field as string]) {
+      const error = validator.validateField(field as string, value);
       setErrorsState(prev => ({
         ...prev,
         [field]: error || '',
@@ -76,15 +76,15 @@ export const useFormValidation = (
   }, [validateOnChange, touched, validator]);
 
   // 设置多个字段值
-  const setValues = useCallback((newValues: { [field: string]: any }) => {
-    setValuesState(prev => ({ ...prev, ...newValues }));
+  const setValues = useCallback((newValues: Partial<T>) => {
+    setValuesState(prev => ({ ...prev, ...newValues } as T));
 
     // 如果启用了实时验证，验证所有已触摸的字段
     if (validateOnChange) {
       const newErrors: { [field: string]: string } = {};
       Object.keys(newValues).forEach(field => {
         if (touched[field]) {
-          const error = validator.validateField(field, newValues[field]);
+          const error = validator.validateField(field, (newValues as Record<string, unknown>)[field]);
           if (error) {
             newErrors[field] = error;
           }
@@ -215,7 +215,7 @@ export const useFormValidation = (
 
   // 处理表单提交
   const handleSubmit = useCallback((
-    onSubmit: (values: any) => void | Promise<void>
+    onSubmit: (values: T) => void | Promise<void>
   ) => {
     return async (e?: React.FormEvent) => {
       if (e) {
@@ -270,8 +270,8 @@ export const useFormValidation = (
 };
 
 // 异步验证Hook
-export interface AsyncValidationRule {
-  validator: (value: any, allValues: { [field: string]: any }) => Promise<string | null>;
+export interface AsyncValidationRule<T = object> {
+  validator: (value: unknown, allValues: T) => Promise<string | null>;
   debounceMs?: number;
 }
 
@@ -279,9 +279,9 @@ export interface UseAsyncValidationOptions {
   debounceMs?: number;
 }
 
-export const useAsyncValidation = (
-  formValidation: UseFormValidationReturn,
-  asyncRules: { [field: string]: AsyncValidationRule },
+export const useAsyncValidation = <T extends object>(
+  formValidation: UseFormValidationReturn<T>,
+  asyncRules: { [field: string]: AsyncValidationRule<T> },
   options: UseAsyncValidationOptions = {}
 ) => {
   const { debounceMs = 300 } = options;
@@ -289,8 +289,8 @@ export const useAsyncValidation = (
   const [validatingFields, setValidatingFields] = useState<Set<string>>(new Set());
 
   // 防抖验证函数
-  const debouncedValidate = useCallback(
-    debounce(async (field: string, value: any, allValues: { [field: string]: any }) => {
+  const debouncedValidate = useMemo(() =>
+    debounce(async (field: string, value: unknown, allValues: Record<string, unknown>) => {
       const rule = asyncRules[field];
       if (!rule) return;
 
@@ -381,7 +381,7 @@ export const useAsyncValidation = (
 };
 
 // 防抖工具函数
-function debounce<T extends (...args: any[]) => any>(
+function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   delay: number
 ): (...args: Parameters<T>) => void {

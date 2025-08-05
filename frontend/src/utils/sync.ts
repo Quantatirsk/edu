@@ -11,7 +11,7 @@ export interface SyncOperation {
   id: string;
   type: 'create' | 'update' | 'delete';
   endpoint: string;
-  data?: any;
+  data?: unknown;
   timestamp: number;
   retries: number;
   maxRetries: number;
@@ -227,10 +227,10 @@ export class DataSyncManager {
       this.invalidateRelatedQueries(operation);
 
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return { 
         success: false, 
-        error: error.message || 'Unknown error' 
+        error: error instanceof Error ? error.message : 'Unknown error' 
       };
     }
   }
@@ -438,12 +438,12 @@ export const useSyncStatus = () => {
 // 便捷的同步操作方法
 export const syncOperations = {
   // 创建操作
-  create: (endpoint: string, data: any, priority: SyncOperation['priority'] = 'medium') => {
+  create: (endpoint: string, data: unknown, priority: SyncOperation['priority'] = 'medium') => {
     return syncManager.addOperation({ type: 'create', endpoint, data, priority });
   },
   
   // 更新操作  
-  update: (endpoint: string, data: any, priority: SyncOperation['priority'] = 'medium') => {
+  update: (endpoint: string, data: unknown, priority: SyncOperation['priority'] = 'medium') => {
     return syncManager.addOperation({ type: 'update', endpoint, data, priority });
   },
   
@@ -466,12 +466,12 @@ export const offlineData = {
   },
   
   // 保存表单数据
-  saveForm: (formId: string, formData: Record<string, any>) => {
+  saveForm: (formId: string, formData: Record<string, unknown>) => {
     offlineManager.storeOfflineData(`form_${formId}`, formData);
   },
   
   // 加载表单数据
-  loadForm: (formId: string): Record<string, any> | null => {
+  loadForm: (formId: string): Record<string, unknown> | null => {
     return offlineManager.getOfflineItem(`form_${formId}`);
   },
   
@@ -496,9 +496,9 @@ export const initializeSync = () => {
 
 // 开发工具
 if (import.meta.env.DEV) {
-  (window as any).syncManager = syncManager;
-  (window as any).syncOperations = syncOperations;
-  (window as any).offlineData = offlineData;
+  (window as Window & { syncManager?: unknown; syncOperations?: unknown; offlineData?: unknown }).syncManager = syncManager;
+  (window as Window & { syncManager?: unknown; syncOperations?: unknown; offlineData?: unknown }).syncOperations = syncOperations;
+  (window as Window & { syncManager?: unknown; syncOperations?: unknown; offlineData?: unknown }).offlineData = offlineData;
   
   console.log('🔄 Sync utilities available on window for debugging');
 }

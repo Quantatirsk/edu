@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import type { ApiError } from '../utils/api';
 
 // 错误状态类型
@@ -108,7 +108,7 @@ const getFriendlyErrorMessage = (error: ApiError): string => {
 
 // 主要错误处理 Hook
 export const useError = (config: ErrorHandlerConfig = {}) => {
-  const finalConfig = { ...defaultConfig, ...config };
+  const finalConfig = useMemo(() => ({ ...defaultConfig, ...config }), [config]);
   
   const [errorState, setErrorState] = useState<ErrorState>({
     error: null,
@@ -181,7 +181,7 @@ export const useError = (config: ErrorHandlerConfig = {}) => {
   }, []);
 
   // 重试功能
-  const retry = useCallback(async (operation: () => Promise<any>) => {
+  const retry = useCallback(async <T>(operation: () => Promise<T>): Promise<T> => {
     if (!finalConfig.retry?.enabled) {
       throw new Error('Retry is not enabled');
     }
@@ -260,7 +260,8 @@ export const useFormError = () => {
   
   const clearFieldError = useCallback((field: string) => {
     setFieldErrors(prev => {
-      const { [field]: _, ...rest } = prev;
+      const { [field]: _deleted, ...rest } = prev;
+      void _deleted; // 标记为故意未使用
       return rest;
     });
   }, []);

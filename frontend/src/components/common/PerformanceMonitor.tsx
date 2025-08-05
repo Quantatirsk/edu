@@ -1,11 +1,21 @@
 import React from 'react';
 import { measureWebVitals, performanceMonitor, getMemoryUsage } from '../../utils/performance';
+import {
+  getVitalColor,
+  NetworkConnection,
+  MemoryInfo,
+  PerformanceMetrics,
+  getNetworkConnection,
+  analyzePerformanceMetrics,
+  analyzeMemoryUsage,
+  analyzeNetworkConditions
+} from '../../utils/performanceUtils';
 
 // 性能指标显示组件（仅开发环境）
 export const PerformanceMetrics: React.FC = () => {
-  const [metrics, setMetrics] = React.useState<Record<string, any>>({});
+  const [metrics, setMetrics] = React.useState<PerformanceMetrics>({});
   const [webVitals, setWebVitals] = React.useState<Record<string, number>>({});
-  const [memoryInfo, setMemoryInfo] = React.useState<any | null>(null);
+  const [memoryInfo, setMemoryInfo] = React.useState<MemoryInfo | null>(null);
 
   React.useEffect(() => {
     if (process.env.NODE_ENV !== 'development') return;
@@ -79,23 +89,6 @@ export const PerformanceMetrics: React.FC = () => {
   );
 };
 
-// Web Vitals颜色编码
-const getVitalColor = (name: string, value: number): string => {
-  const thresholds: Record<string, { good: number; poor: number }> = {
-    CLS: { good: 0.1, poor: 0.25 },
-    FID: { good: 100, poor: 300 },
-    FCP: { good: 1800, poor: 3000 },
-    LCP: { good: 2500, poor: 4000 },
-    TTFB: { good: 800, poor: 1800 },
-  };
-
-  const threshold = thresholds[name];
-  if (!threshold) return 'text-white';
-
-  if (value <= threshold.good) return 'text-green-400';
-  if (value <= threshold.poor) return 'text-yellow-400';
-  return 'text-red-400';
-};
 
 // 性能警告组件
 export const PerformanceWarning: React.FC<{
@@ -134,77 +127,21 @@ export const PerformanceWarning: React.FC<{
   );
 };
 
-// 性能监控Hook
-export const usePerformanceMonitoring = (componentName: string) => {
-  React.useEffect(() => {
-    performanceMonitor.mark(`${componentName}-mount`);
-    
-    return () => {
-      performanceMonitor.measure(`${componentName}-mount`);
-    };
-  }, [componentName]);
 
-  const measureOperation = React.useCallback((operationName: string) => {
-    const fullName = `${componentName}-${operationName}`;
-    
-    return {
-      start: () => performanceMonitor.mark(fullName),
-      end: () => performanceMonitor.measure(fullName),
-    };
-  }, [componentName]);
-
-  return { measureOperation };
-};
-
-// 渲染性能监控Hook
-export const useRenderPerformance = (componentName: string) => {
-  const renderCount = React.useRef(0);
-  const lastRenderTime = React.useRef(performance.now());
-
-  React.useEffect(() => {
-    renderCount.current += 1;
-    const now = performance.now();
-    const timeSinceLastRender = now - lastRenderTime.current;
-    lastRenderTime.current = now;
-
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`${componentName} render #${renderCount.current}, time since last: ${timeSinceLastRender.toFixed(2)}ms`);
-      
-      // 警告频繁重渲染
-      if (timeSinceLastRender < 16 && renderCount.current > 1) {
-        console.warn(`${componentName} is re-rendering frequently (${timeSinceLastRender.toFixed(2)}ms since last render)`);
-      }
-    }
-  });
-
-  return {
-    renderCount: renderCount.current,
-  };
-};
 
 // 网络性能监控
 export const NetworkMonitor: React.FC = () => {
-  const [networkInfo, setNetworkInfo] = React.useState<any>(null);
+  const [networkInfo, setNetworkInfo] = React.useState<NetworkConnection | null>(null);
   const [requests, setRequests] = React.useState<PerformanceResourceTiming[]>([]);
 
   React.useEffect(() => {
     // 监控网络连接信息
-    if ('connection' in navigator) {
-      const connection = (navigator as any).connection;
-      setNetworkInfo({
-        effectiveType: connection.effectiveType,
-        downlink: connection.downlink,
-        rtt: connection.rtt,
-        saveData: connection.saveData,
-      });
+    const connection = getNetworkConnection();
+    if (connection) {
+      setNetworkInfo(connection);
 
       const handleConnectionChange = () => {
-        setNetworkInfo({
-          effectiveType: connection.effectiveType,
-          downlink: connection.downlink,
-          rtt: connection.rtt,
-          saveData: connection.saveData,
-        });
+        setNetworkInfo(getNetworkConnection());
       };
 
       connection.addEventListener('change', handleConnectionChange);
@@ -278,28 +215,14 @@ export const PerformanceRecommendations: React.FC = () => {
       
       // 分析内存使用
       const memory = getMemoryUsage();
-      if (memory && memory.usedJSHeapSize > memory.jsHeapSizeLimit * 0.8) {
-        newRecommendations.push('内存使用接近限制，考虑优化内存管理');
-      }
+      newRecommendations.push(...analyzeMemoryUsage(memory));
 
       // 分析网络连接
-      if ('connection' in navigator) {
-        const connection = (navigator as any).connection;
-        if (connection.saveData) {
-          newRecommendations.push('用户启用了数据节省模式，减少资源加载');
-        }
-        if (connection.effectiveType === '2g') {
-          newRecommendations.push('网络连接较慢，启用更激进的优化策略');
-        }
-      }
+      newRecommendations.push(...analyzeNetworkConditions());
 
       // 分析性能指标
       const metrics = performanceMonitor.getAllMetrics();
-      Object.entries(metrics).forEach(([name, data]) => {
-        if (data.average > 1000) {
-          newRecommendations.push(`${name} 平均执行时间较长 (${data.average.toFixed(2)}ms)`);
-        }
-      });
+      newRecommendations.push(...analyzePerformanceMetrics(metrics));
 
       setRecommendations(newRecommendations);
     };

@@ -37,7 +37,7 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
 }));
 
 // Mock requestIdleCallback
-global.requestIdleCallback = vi.fn((cb) => setTimeout(cb, 1) as any);
+global.requestIdleCallback = vi.fn((cb) => setTimeout(cb, 1) as unknown as number);
 global.cancelIdleCallback = vi.fn();
 
 // Mock clipboard API

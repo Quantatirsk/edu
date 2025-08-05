@@ -58,24 +58,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   return <>{children}</>;
 };
 
-// 高阶组件版本
-export const withAuth = <P extends object>(
-  Component: React.ComponentType<P>,
-  options?: {
-    requiredRole?: 'student' | 'teacher' | 'admin';
-    fallbackPath?: string;
-  }
-) => {
-  const WrappedComponent = (props: P) => (
-    <ProtectedRoute {...options}>
-      <Component {...props} />
-    </ProtectedRoute>
-  );
-
-  WrappedComponent.displayName = `withAuth(${Component.displayName || Component.name})`;
-
-  return WrappedComponent;
-};
 
 // 角色权限检查组件
 export const RoleGuard: React.FC<{

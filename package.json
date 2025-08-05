@@ -1,0 +1,26 @@
+{
+  "name": "edu-platform",
+  "version": "1.0.0",
+  "description": "Full-stack education platform with React frontend and FastAPI backend",
+  "scripts": {
+    "dev": "./start-dev.sh",
+    "dev:quick": "./dev.sh",
+    "dev:win": "start-dev.bat",
+    "frontend": "cd frontend && npm run dev",
+    "backend": "cd backend && uvicorn main:app --host 0.0.0.0 --port 8000 --reload",
+    "install": "npm run install:frontend && npm run install:backend",
+    "install:frontend": "cd frontend && npm install",
+    "install:backend": "cd backend && pip install -r requirements.txt",
+    "build": "cd frontend && npm run build",
+    "test": "cd frontend && npm test",
+    "clean": "cd frontend && rm -rf node_modules dist && cd ../backend && rm -rf __pycache__ .pytest_cache",
+    "kill-ports": "lsof -ti:5173,8000 | xargs kill -9 || true"
+  },
+  "keywords": ["education", "react", "fastapi", "typescript", "python"],
+  "author": "Education Platform Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "python": ">=3.9.0"
+  }
+}

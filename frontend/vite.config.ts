@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { visualizer } from 'rollup-plugin-visualizer'
 import path from 'path'
@@ -124,5 +124,12 @@ export default defineConfig({
   define: {
     __DEV__: process.env.NODE_ENV === 'development',
     __PROD__: process.env.NODE_ENV === 'production',
+  },
+  
+  // 测试配置
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/test/setup.ts',
   },
 })

@@ -337,7 +337,7 @@ export const useAuth = () => {
   // 监听storage变化 (多标签页同步)
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      if (Object.values(STORAGE_KEYS).includes(e.key as any)) {
+      if (e.key && Object.values(STORAGE_KEYS).includes(e.key as keyof typeof STORAGE_KEYS)) {
         const { user, token } = authUtils.getAuth();
         updateAuthState({
           user,

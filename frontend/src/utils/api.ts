@@ -2,7 +2,7 @@ import axios, { AxiosError } from 'axios';
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
 // API 基础配置
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
 // API配置常量
 export const APIConfig = {
@@ -15,11 +15,11 @@ export interface ApiError {
   message: string;
   code?: string;
   status?: number;
-  details?: any;
+  details?: unknown;
 }
 
 // API 响应类型定义
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data: T;
   message?: string;
@@ -49,10 +49,24 @@ const createApiClient = (): AxiosInstance => {
   // 请求拦截器
   client.interceptors.request.use(
     (config) => {
-      // 添加认证 token
-      const token = localStorage.getItem('auth_token');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+      // 添加认证 token - 从统一的auth-storage获取
+      const authStorage = localStorage.getItem('auth-storage');
+      if (authStorage) {
+        try {
+          const parsedAuth = JSON.parse(authStorage);
+          // Zustand persist 存储结构: { state: { token, user, ... }, version: 1 }
+          const token = parsedAuth.state?.token || parsedAuth.token;
+          if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+            console.log('🔐 Auth token attached to request');
+          } else {
+            console.warn('🚫 No auth token found in storage');
+          }
+        } catch (error) {
+          console.error('Failed to parse auth storage:', error);
+        }
+      } else {
+        console.warn('🚫 No auth storage found');
       }
 
       // 添加请求时间戳
@@ -110,7 +124,7 @@ export const handleApiError = (error: AxiosError): ApiError => {
   if (error.response) {
     // 服务器响应错误
     const { status, data } = error.response;
-    const message = (data as any)?.message || error.message || '服务器错误';
+    const message = (data as { message?: string })?.message || error.message || '服务器错误';
     
     switch (status) {
       case 400:
@@ -121,9 +135,8 @@ export const handleApiError = (error: AxiosError): ApiError => {
           details: data,
         };
       case 401:
-        // 清除过期的认证信息
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('user_info');
+        // 清除过期的认证信息 - 清除 authStore 数据
+        localStorage.removeItem('auth-storage');
         return {
           message: '认证失败，请重新登录',
           code: 'UNAUTHORIZED',
@@ -182,26 +195,26 @@ export const apiClient = createApiClient();
 
 // API 请求包装函数
 export const apiRequest = {
-  get: <T = any>(url: string, config?: AxiosRequestConfig): Promise<T> =>
-    apiClient.get<ApiResponse<T>>(url, config).then(response => response.data.data),
+  get: <T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> =>
+    apiClient.get<T>(url, config).then(response => response.data),
     
-  post: <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> =>
-    apiClient.post<ApiResponse<T>>(url, data, config).then(response => response.data.data),
+  post: <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> =>
+    apiClient.post<T>(url, data, config).then(response => response.data),
     
-  put: <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> =>
-    apiClient.put<ApiResponse<T>>(url, data, config).then(response => response.data.data),
+  put: <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> =>
+    apiClient.put<T>(url, data, config).then(response => response.data),
     
-  patch: <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> =>
-    apiClient.patch<ApiResponse<T>>(url, data, config).then(response => response.data.data),
+  patch: <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> =>
+    apiClient.patch<T>(url, data, config).then(response => response.data),
     
-  delete: <T = any>(url: string, config?: AxiosRequestConfig): Promise<T> =>
-    apiClient.delete<ApiResponse<T>>(url, config).then(response => response.data.data),
+  delete: <T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> =>
+    apiClient.delete<T>(url, config).then(response => response.data),
 };
 
 // 分页请求函数
-export const paginatedRequest = <T = any>(
+export const paginatedRequest = <T = unknown>(
   url: string, 
-  params?: { page?: number; limit?: number; [key: string]: any },
+  params?: { page?: number; limit?: number; [key: string]: unknown },
   config?: AxiosRequestConfig
 ): Promise<PaginatedResponse<T>> =>
   apiClient.get<PaginatedResponse<T>>(url, { ...config, params }).then(response => response.data);
@@ -267,7 +280,7 @@ declare module 'axios' {
   export interface AxiosRequestConfig {
     metadata?: {
       startTime?: number;
-      [key: string]: any;
+      [key: string]: unknown;
     };
   }
 }

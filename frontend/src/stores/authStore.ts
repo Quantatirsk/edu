@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { useMemo } from 'react';
-import React from 'react';
 import type { User } from '../types';
 
 // 认证状态接口
@@ -271,7 +270,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         }),
         // 版本管理
         version: 1,
-        migrate: (persistedState: any, version: number) => {
+        migrate: (persistedState: unknown, version: number) => {
           if (version === 0) {
             // 从版本 0 迁移到版本 1 的逻辑
             return {
@@ -283,6 +282,28 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             };
           }
           return persistedState;
+        },
+        // 自定义合并逻辑：验证token有效性
+        merge: (persistedState: unknown, currentState: unknown) => {
+          const merged = { ...(currentState as AuthState), ...(persistedState as Partial<AuthState>) };
+          
+          // 如果没有token或user，确保认证状态为false
+          if (!merged.token || !merged.user) {
+            console.log('AuthStore: No valid token or user found, clearing auth state');
+            merged.isAuthenticated = false;
+            merged.user = null;
+            merged.token = null;
+            merged.refreshToken = null;
+          }
+          
+          // TODO: 这里可以添加token过期检查
+          console.log('AuthStore initialized with state:', {
+            isAuthenticated: merged.isAuthenticated,
+            hasUser: !!merged.user,
+            hasToken: !!merged.token
+          });
+          
+          return merged;
         },
       }
     )

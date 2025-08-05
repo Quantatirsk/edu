@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import type { Teacher, DetailedReview, ScoreRecord } from './types';
-import { mockTeachers, mockStudents, mockDetailedReviews, mockScoreRecords } from './data/mockData';
+import { mockTeachers, mockDetailedReviews, mockScoreRecords } from './data/mockData';
 
 // API and State Management
 import { queryClient } from './utils/queryClient';

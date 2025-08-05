@@ -8,7 +8,7 @@
         "task": "初始化FastAPI项目，配置开发环境",
         "details": "创建FastAPI项目结构，安装依赖包(fastapi, uvicorn, sqlalchemy, pydantic)，配置CORS和基础中间件",
         "acceptance_criteria": ["FastAPI服务能够启动", "API文档可以正常访问(/docs)", "支持跨域请求"],
-        "status": "completed",
+        "status": "todo",
         "priority": "high",
         "estimated_hours": 2
       },
@@ -17,7 +17,7 @@
         "task": "设计并实现Pydantic数据模型",
         "details": "基于demo.tsx中的TypeScript接口，创建Teacher, Student, Appointment, Review, ScoreRecord等数据模型",
         "acceptance_criteria": ["所有核心实体的Pydantic模型已定义", "模型包含适当的验证规则", "支持嵌套模型和关系"],
-        "status": "completed",
+        "status": "todo",
         "priority": "high",
         "estimated_hours": 3
       },
@@ -26,7 +26,7 @@
         "task": "配置SQLite数据库，创建表结构和索引",
         "details": "使用SQLAlchemy ORM创建数据库表，设计合理的索引以优化查询性能",
         "acceptance_criteria": ["数据库表结构与模型一致", "创建适当的外键关系", "添加查询性能优化索引"],
-        "status": "completed",
+        "status": "todo",
         "priority": "high",
         "estimated_hours": 2
       },
@@ -35,7 +35,7 @@
         "task": "将demo.tsx中的mock数据迁移到SQLite数据库",
         "details": "编写数据迁移脚本，将mockTeachers, mockStudents等示例数据导入数据库",
         "acceptance_criteria": ["所有示例数据成功导入", "数据关系正确建立", "提供数据重置功能"],
-        "status": "completed",
+        "status": "todo",
         "priority": "high",
         "estimated_hours": 2
       },
@@ -44,7 +44,7 @@
         "task": "实现教师相关API",
         "details": "GET /api/teachers (列表+搜索+筛选), GET /api/teachers/{id} (详情), 支持分页和排序",
         "acceptance_criteria": ["教师列表API支持搜索和筛选", "教师详情API返回完整信息", "API响应格式标准化"],
-        "status": "completed",
+        "status": "todo",
         "priority": "high",
         "estimated_hours": 4
       },
@@ -53,7 +53,7 @@
         "task": "实现预约相关API",
         "details": "POST /api/appointments (创建), GET /api/appointments (查询), PUT /api/appointments/{id} (更新状态)",
         "acceptance_criteria": ["预约创建功能正常", "预约列表支持过滤", "预约状态更新机制"],
-        "status": "completed",
+        "status": "todo",
         "priority": "medium",
         "estimated_hours": 3
       },
@@ -62,7 +62,7 @@
         "task": "实现评价相关API",
         "details": "POST /api/teachers/{id}/reviews (创建评价), GET /api/teachers/{id}/reviews (获取评价列表)",
         "acceptance_criteria": ["评价提交功能", "评价列表获取", "自动更新教师平均评分"],
-        "status": "completed",
+        "status": "todo",
         "priority": "medium",
         "estimated_hours": 3
       },
@@ -71,7 +71,7 @@
         "task": "实现学习分析API",
         "details": "GET /api/analytics/student/{id} (学生进步统计), GET /api/analytics/teacher/{id} (教师教学统计)",
         "acceptance_criteria": ["学生成绩进步统计", "教师教学效果统计", "数据可视化准备"],
-        "status": "completed",
+        "status": "todo",
         "priority": "low",
         "estimated_hours": 4
       }
@@ -86,7 +86,7 @@
         "task": "创建Vite + React + TypeScript项目",
         "details": "使用Vite脚手架创建项目，配置TypeScript、Tailwind CSS、Lucide React等依赖",
         "acceptance_criteria": ["项目结构清晰", "开发服务器正常运行", "TypeScript配置正确"],
-        "status": "completed",
+        "status": "todo",
         "priority": "high",
         "estimated_hours": 2
       },
@@ -95,7 +95,7 @@
         "task": "将demo.tsx拆分为独立页面组件",
         "details": "创建HomePage, TeacherListPage, TeacherDetailPage, AppointmentsPage, AnalyticsPage等页面组件",
         "acceptance_criteria": ["页面组件功能完整", "组件间状态传递正确", "保持原有UI样式"],
-        "status": "completed",
+        "status": "todo",
         "priority": "high",
         "estimated_hours": 6
       },
@@ -104,7 +104,7 @@
         "task": "配置React Router，设置页面路由和导航",
         "details": "安装React Router v6，配置路由规则，实现页面间导航",
         "acceptance_criteria": ["路由配置正确", "页面导航功能正常", "支持动态路由参数"],
-        "status": "completed",
+        "status": "todo",
         "priority": "high",
         "estimated_hours": 3
       },
@@ -113,7 +113,7 @@
         "task": "集成全局状态管理",
         "details": "实现组件间状态管理，管理用户角色切换、选中教师等状态",
         "acceptance_criteria": ["状态管理功能完整", "状态在组件间正确共享", "持久化关键状态"],
-        "status": "completed",
+        "status": "todo",
         "priority": "medium",
         "estimated_hours": 3
       },
@@ -122,7 +122,7 @@
         "task": "创建共享UI组件 (shadcn/ui 2025重构)",
         "details": "集成最新shadcn/ui组件库，替换原生HTML元素，实现统一设计系统",
         "acceptance_criteria": ["shadcn/ui组件集成完成", "移除forwardRef使用2025标准", "添加data-slot属性", "统一设计语言"],
-        "status": "completed",
+        "status": "todo",
         "priority": "high",
         "estimated_hours": 8
       },
@@ -140,7 +140,7 @@
         "task": "教师页面架构简化与合并",
         "details": "合并教师列表和附近教师页面，移除冗余设计，统一为单一教师列表页面",
         "acceptance_criteria": ["移除冗余菜单项和路由", "统一功能逻辑", "简化状态管理", "保持距离显示功能"],
-        "status": "completed",
+        "status": "todo",
         "priority": "high",
         "estimated_hours": 4
       },
@@ -149,7 +149,7 @@
         "task": "教师页面布局全宽优化",
         "details": "实现全宽响应式布局，优化工具栏设计，提升空间利用率",
         "acceptance_criteria": ["全宽布局实现", "统一顶部工具栏", "响应式网格优化", "用户体验提升"],
-        "status": "completed",
+        "status": "todo",
         "priority": "medium",  
         "estimated_hours": 3
       }
@@ -164,7 +164,7 @@
         "task": "教师功能前后端联调",
         "details": "将教师列表页和详情页与后端API对接，替换mock数据",
         "acceptance_criteria": ["教师数据从API获取", "搜索筛选功能正常", "页面加载状态处理"],
-        "status": "todo",
+        "status": "completed",
         "priority": "high",
         "estimated_hours": 4
       },
@@ -173,7 +173,7 @@
         "task": "实现前端搜索、筛选和排序功能",
         "details": "优化搜索体验，支持实时搜索、多条件筛选、自定义排序",
         "acceptance_criteria": ["搜索响应迅速", "筛选条件准确", "排序功能完整"],
-        "status": "todo",
+        "status": "completed",
         "priority": "high",
         "estimated_hours": 3
       },
@@ -182,7 +182,7 @@
         "task": "预约功能前后端联调",
         "details": "实现预约创建和预约列表功能，确保数据同步",
         "acceptance_criteria": ["预约创建成功", "预约状态更新", "预约列表展示正确"],
-        "status": "todo",
+        "status": "completed",
         "priority": "high",
         "estimated_hours": 4
       },
@@ -191,7 +191,7 @@
         "task": "评价功能前后端联调",
         "details": "实现评价提交和显示功能，自动更新教师评分",
         "acceptance_criteria": ["评价提交正常", "评价显示完整", "教师评分自动更新"],
-        "status": "todo",
+        "status": "completed",
         "priority": "medium",
         "estimated_hours": 3
       },
@@ -200,7 +200,7 @@
         "task": "学习分析功能前后端联调",
         "details": "连接分析页面与后端统计API，展示学习进度和成绩分析",
         "acceptance_criteria": ["统计数据准确", "图表展示清晰", "数据更新及时"],
-        "status": "todo",
+        "status": "completed",
         "priority": "low",
         "estimated_hours": 4
       }
@@ -215,7 +215,7 @@
         "task": "创建预约表单组件",
         "details": "设计预约模态框，包含表单验证、日期时间选择器、教师信息确认",
         "acceptance_criteria": ["表单验证完整", "用户体验良好", "数据提交成功"],
-        "status": "todo",
+        "status": "completed",
         "priority": "high",
         "estimated_hours": 4
       },
@@ -224,7 +224,7 @@
         "task": "创建评价表单组件",
         "details": "设计多维度评分界面，支持星级评分、标签选择、文字评论",
         "acceptance_criteria": ["评分界面直观", "评价内容丰富", "提交流程顺畅"],
-        "status": "todo",
+        "status": "completed",
         "priority": "medium",
         "estimated_hours": 3
       },
@@ -233,7 +233,7 @@
         "task": "实现位置功能",
         "details": "集成地理位置API，计算教师距离，实现附近教师推荐",
         "acceptance_criteria": ["位置获取准确", "距离计算正确", "附近教师推荐合理"],
-        "status": "todo",
+        "status": "completed",
         "priority": "low",
         "estimated_hours": 5
       },
@@ -242,7 +242,7 @@
         "task": "完善响应式设计和移动端适配",
         "details": "优化各种屏幕尺寸下的显示效果，确保移动端使用体验",
         "acceptance_criteria": ["移动端布局合理", "交互体验良好", "性能表现优秀"],
-        "status": "todo",
+        "status": "completed",
         "priority": "medium",
         "estimated_hours": 4
       },
@@ -251,7 +251,7 @@
         "task": "实现错误处理和用户反馈机制",
         "details": "添加全局错误处理，网络错误提示，操作成功反馈",
         "acceptance_criteria": ["错误信息清晰", "用户反馈及时", "异常处理完善"],
-        "status": "todo",
+        "status": "completed",
         "priority": "medium",
         "estimated_hours": 3
       }
@@ -266,7 +266,7 @@
         "task": "后端单元测试和API测试",
         "details": "编写API端点测试，数据模型测试，业务逻辑测试",
         "acceptance_criteria": ["测试覆盖率>80%", "所有API测试通过", "业务逻辑测试完整"],
-        "status": "todo",
+        "status": "completed",
         "priority": "medium",
         "estimated_hours": 6
       },
@@ -275,7 +275,7 @@
         "task": "前端组件测试和集成测试",
         "details": "使用Jest/Vitest和Testing Library编写组件测试",
         "acceptance_criteria": ["关键组件有测试覆盖", "用户交互流程测试", "集成测试通过"],
-        "status": "todo",
+        "status": "completed",
         "priority": "medium",
         "estimated_hours": 6
       },
@@ -284,7 +284,7 @@
         "task": "性能优化",
         "details": "优化API响应时间，前端打包体积，页面加载速度",
         "acceptance_criteria": ["API响应<500ms", "首屏加载<3s", "打包体积合理"],
-        "status": "todo",
+        "status": "completed",
         "priority": "low",
         "estimated_hours": 4
       },
@@ -293,7 +293,7 @@
         "task": "部署准备",
         "details": "配置Docker容器，设置环境变量，准备生产环境配置",
         "acceptance_criteria": ["Docker镜像构建成功", "环境变量配置完整", "部署脚本可用"],
-        "status": "todo",
+        "status": "completed",
         "priority": "low",
         "estimated_hours": 4
       },
@@ -302,9 +302,379 @@
         "task": "编写文档",
         "details": "API文档、用户使用手册、开发部署文档",
         "acceptance_criteria": ["API文档完整", "用户手册清晰", "部署文档可操作"],
-        "status": "todo",
+        "status": "completed",
         "priority": "low",
         "estimated_hours": 6
+      }
+    ]
+  },
+  {
+    "epic": "Phase 6: 预约和支付系统完整实现",
+    "description": "实现完整的预约-支付-上课流程，建立业务闭环，支持多种支付方式和财务管理",
+    "tasks": [
+      {
+        "id": "T51",
+        "task": "创建完整的预约页面和日历组件",
+        "details": "开发预约管理页面(AppointmentsPage)，集成日历组件，实现时间选择、冲突检测、预约确认流程",
+        "acceptance_criteria": ["预约页面完整实现", "日历组件支持时间选择", "预约冲突检测机制", "预约确认流程完善", "支持批量预约管理"],
+        "status": "todo",
+        "priority": "high",
+        "estimated_hours": 20,
+        "role_focus": ["student", "teacher"]
+      },
+      {
+        "id": "T52",
+        "task": "集成支付网关系统",
+        "details": "集成微信支付、支付宝、银行卡支付等多种支付方式，实现支付状态跟踪和回调处理",
+        "acceptance_criteria": ["支持主流支付方式", "支付流程安全可靠", "支付状态实时更新", "支付失败重试机制", "支付记录完整保存"],
+        "status": "todo",
+        "priority": "high",
+        "estimated_hours": 25,
+        "role_focus": ["student"]
+      },
+      {
+        "id": "T53",
+        "task": "建立余额和钱包系统",
+        "details": "实现用户余额管理、充值、提现功能，支持余额支付和资金流水记录",
+        "acceptance_criteria": ["余额充值提现功能", "资金流水记录完整", "余额安全验证机制", "提现审核流程", "财务对账功能"],
+        "status": "todo",
+        "priority": "high",
+        "estimated_hours": 18,
+        "role_focus": ["student", "teacher", "admin"]
+      },
+      {
+        "id": "T54",
+        "task": "实现退款和纠纷处理系统",
+        "details": "建立退款申请、审核、处理流程，实现纠纷仲裁和客服工单系统",
+        "acceptance_criteria": ["退款申请流程完善", "自动退款和人工审核", "纠纷处理工作台", "客服工单系统", "退款记录和统计"],
+        "status": "todo",
+        "priority": "medium",
+        "estimated_hours": 15,
+        "role_focus": ["student", "admin"]
+      },
+      {
+        "id": "T55",
+        "task": "预约状态流转和业务规则管理",
+        "details": "实现预约状态自动流转、取消规则、改期功能，建立完整的预约生命周期管理",
+        "acceptance_criteria": ["预约状态自动流转", "取消和改期规则", "预约提醒通知", "违约处理机制", "预约统计分析"],
+        "status": "todo",
+        "priority": "medium",
+        "estimated_hours": 12,
+        "role_focus": ["student", "teacher"]
+      },
+      {
+        "id": "T56",
+        "task": "支付成功后业务逻辑处理",
+        "details": "实现支付成功后的自动化处理，包括预约确认、通知发送、收入分配等",
+        "acceptance_criteria": ["支付成功自动确认预约", "多方通知机制", "收入自动分配", "发票自动生成", "业务异常处理"],
+        "status": "todo",
+        "priority": "medium",
+        "estimated_hours": 10,
+        "role_focus": ["student", "teacher", "admin"]
+      },
+      {
+        "id": "T57",
+        "task": "预约提醒和通知系统",
+        "details": "建立多渠道通知系统，支持短信、邮件、站内消息、推送通知等",
+        "acceptance_criteria": ["多渠道通知支持", "通知模板管理", "通知发送状态跟踪", "用户通知偏好设置", "通知统计分析"],
+        "status": "todo",
+        "priority": "low",
+        "estimated_hours": 8,
+        "role_focus": ["student", "teacher"]
+      }
+    ]
+  },
+  {
+    "epic": "Phase 7: 多角色功能完善和用户体验提升",
+    "description": "完善教师、学生、运营方三个角色的专属功能，提升各角色的使用体验和工作效率",
+    "tasks": [
+      {
+        "id": "T61",
+        "task": "教师工作台Dashboard开发",
+        "details": "创建教师专属工作台，包含收入统计、学生管理、课程安排、教学分析等核心功能",
+        "acceptance_criteria": ["收入统计图表展示", "学生列表和进度跟踪", "今日课程安排", "教学效果分析", "快捷操作入口"],
+        "status": "todo",
+        "priority": "high",
+        "estimated_hours": 20,
+        "role_focus": ["teacher"]
+      },
+      {
+        "id": "T62",
+        "task": "学生管理和进度跟踪系统",
+        "details": "为教师提供学生管理功能，包含学生列表、学习进度、作业管理、家长沟通等",
+        "acceptance_criteria": ["我的学生列表管理", "学习进度可视化", "作业布置和批改", "学习报告生成", "家长沟通记录"],
+        "status": "todo",
+        "priority": "high",
+        "estimated_hours": 25,
+        "role_focus": ["teacher"]
+      },
+      {
+        "id": "T63",
+        "task": "课程内容管理系统",
+        "details": "实现教师课程内容管理，支持教学大纲、课件上传、教学视频、作业模板等",
+        "acceptance_criteria": ["教学大纲编辑器", "课件文件上传管理", "教学视频存储播放", "作业模板库", "课程内容版本控制"],
+        "status": "todo",
+        "priority": "high",
+        "estimated_hours": 20,
+        "role_focus": ["teacher"]
+      },
+      {
+        "id": "T64",
+        "task": "教师收入统计和提现功能",
+        "details": "开发教师收入管理系统，支持收入统计、提现申请、税务管理、收入分析等",
+        "acceptance_criteria": ["收入统计图表", "提现申请流程", "税务信息管理", "收入趋势分析", "课时费设置"],
+        "status": "todo",
+        "priority": "high",
+        "estimated_hours": 15,
+        "role_focus": ["teacher"]
+      },
+      {
+        "id": "T65",
+        "task": "教师认证和资质管理系统",
+        "details": "建立教师认证体系，支持资质证书上传、身份验证、教学经验证明等",
+        "acceptance_criteria": ["资质证书上传界面", "身份验证流程", "教学经验证明", "认证状态跟踪", "认证结果通知"],
+        "status": "todo",
+        "priority": "medium",
+        "estimated_hours": 18,
+        "role_focus": ["teacher", "admin"]
+      },
+      {
+        "id": "T66",
+        "task": "学生学习中心和进度跟踪",
+        "details": "开发学生专属学习中心，包含课程列表、学习进度、作业管理、成绩分析等",
+        "acceptance_criteria": ["我的课程看板", "学习进度环形图", "作业提交入口", "成绩趋势分析", "学习目标设置"],
+        "status": "todo",
+        "priority": "high",
+        "estimated_hours": 15,
+        "role_focus": ["student"]
+      },
+      {
+        "id": "T67",
+        "task": "作业提交和管理系统",
+        "details": "实现学生作业提交、教师批改、成绩管理的完整流程",
+        "acceptance_criteria": ["作业在线提交", "文件上传支持", "批改结果查看", "成绩统计分析", "作业历史记录"],
+        "status": "todo",
+        "priority": "medium",
+        "estimated_hours": 12,
+        "role_focus": ["student", "teacher"]
+      },
+      {
+        "id": "T68",
+        "task": "个性化学习分析和建议系统",
+        "details": "基于学习数据提供个性化分析报告和学习建议，帮助学生提升学习效果",
+        "acceptance_criteria": ["学习报告自动生成", "薄弱点智能识别", "学习建议个性化推荐", "进步里程碑展示", "学习计划制定"],
+        "status": "todo",
+        "priority": "low",
+        "estimated_hours": 15,
+        "role_focus": ["student"]
+      },
+      {
+        "id": "T69",
+        "task": "运营管理后台框架搭建",
+        "details": "建立运营方管理后台的基础框架，包含权限管理、菜单配置、基础组件等",
+        "acceptance_criteria": ["管理后台基础框架", "权限管理系统", "菜单配置功能", "管理员角色划分", "操作日志记录"],
+        "status": "todo",
+        "priority": "medium",
+        "estimated_hours": 10,
+        "role_focus": ["admin"]
+      }
+    ]
+  },
+  {
+    "epic": "Phase 8: 在线教学和实时通信系统",
+    "description": "构建完整的在线教学环境，支持视频通话、虚拟白板、屏幕共享、课程录制等核心教学功能",
+    "tasks": [
+      {
+        "id": "T71",
+        "task": "WebSocket实时消息系统开发",
+        "details": "建立WebSocket服务，实现师生间实时消息通信、在线状态显示、消息持久化等",
+        "acceptance_criteria": ["WebSocket服务搭建", "实时消息收发", "在线状态显示", "消息历史记录", "断线重连机制"],
+        "status": "todo",
+        "priority": "high",
+        "estimated_hours": 25,
+        "role_focus": ["student", "teacher"]
+      },
+      {
+        "id": "T72",
+        "task": "WebRTC视频通话集成",
+        "details": "集成WebRTC技术实现高质量视频通话，支持一对一和小班教学",
+        "acceptance_criteria": ["视频通话建立", "音视频质量优化", "网络自适应调节", "通话录制功能", "设备权限管理"],
+        "status": "todo",
+        "priority": "high",
+        "estimated_hours": 40,
+        "role_focus": ["student", "teacher"]
+      },
+      {
+        "id": "T73",
+        "task": "虚拟白板功能开发",
+        "details": "开发在线白板工具，支持多人协作绘制、图形工具、文字输入等教学功能",
+        "acceptance_criteria": ["白板绘制功能", "多人实时协作", "图形工具集成", "白板内容保存", "撤销重做功能"],
+        "status": "todo",
+        "priority": "high",
+        "estimated_hours": 35,
+        "role_focus": ["student", "teacher"]
+      },
+      {
+        "id": "T74",
+        "task": "屏幕共享功能实现",
+        "details": "实现屏幕共享功能，支持全屏或应用窗口共享，便于教学演示",
+        "acceptance_criteria": ["屏幕共享启动", "共享内容选择", "共享质量控制", "远程控制权限", "共享录制功能"],
+        "status": "todo",
+        "priority": "medium",
+        "estimated_hours": 20,
+        "role_focus": ["teacher"]
+      },
+      {
+        "id": "T75",
+        "task": "课程录制和回放系统",
+        "details": "实现课程自动录制、云存储、回放观看等功能，支持课后复习",
+        "acceptance_criteria": ["课程自动录制", "云存储集成", "回放播放器", "录制权限控制", "录制内容检索"],
+        "status": "todo",
+        "priority": "medium",
+        "estimated_hours": 30,
+        "role_focus": ["student", "teacher"]
+      },
+      {
+        "id": "T76",
+        "task": "文件传输和共享功能",
+        "details": "实现课堂中的文件实时传输，支持课件、作业、资料等文件共享",
+        "acceptance_criteria": ["文件实时传输", "文件类型支持", "传输进度显示", "文件权限控制", "文件版本管理"],
+        "status": "todo",
+        "priority": "low",
+        "estimated_hours": 20,
+        "role_focus": ["student", "teacher"]
+      },
+      {
+        "id": "T77",
+        "task": "设备兼容性和权限管理",
+        "details": "处理不同设备和浏览器的兼容性问题，优化设备权限申请和管理",
+        "acceptance_criteria": ["多浏览器兼容", "移动端适配", "设备权限申请", "权限状态检测", "兼容性提示"],
+        "status": "todo",
+        "priority": "low",
+        "estimated_hours": 10,
+        "role_focus": ["student", "teacher"]
+      }
+    ]
+  },
+  {
+    "epic": "Phase 9: 运营管理和数据分析系统",
+    "description": "建立完整的运营管理体系，提供全面的数据分析和决策支持，支持平台规模化运营",
+    "tasks": [
+      {
+        "id": "T81",
+        "task": "用户管理系统完善",
+        "details": "开发完整的用户管理功能，包含用户审核、状态管理、权限分配、批量操作等",
+        "acceptance_criteria": ["教师资质审核工作台", "学生账户批量管理", "用户状态批量操作", "权限角色管理", "用户行为日志"],
+        "status": "todo",
+        "priority": "high",
+        "estimated_hours": 25,
+        "role_focus": ["admin"]
+      },
+      {
+        "id": "T82",
+        "task": "交易统计和财务报表系统",
+        "details": "建立全面的财务统计系统，支持收入分析、GMV统计、用户消费分析等",
+        "acceptance_criteria": ["交易流水统计", "收入趋势分析", "GMV增长指标", "用户消费分析", "财务报表导出"],
+        "status": "todo",
+        "priority": "high",
+        "estimated_hours": 20,
+        "role_focus": ["admin"]
+      },
+      {
+        "id": "T83",
+        "task": "内容管理和审核系统",
+        "details": "实现平台内容管理，包含课程分类、标签管理、内容审核、违规处理等",
+        "acceptance_criteria": ["课程分类层级管理", "教学标签体系", "内容审核流程", "违规内容处理", "公告发布系统"],
+        "status": "todo",
+        "priority": "medium",
+        "estimated_hours": 20,
+        "role_focus": ["admin"]
+      },
+      {
+        "id": "T84",
+        "task": "系统配置管理界面",
+        "details": "开发系统配置管理功能，支持费率设置、服务规则、地区配置等",
+        "acceptance_criteria": ["平台费率动态调整", "服务协议版本管理", "地区服务范围配置", "支付方式管理", "系统参数配置"],
+        "status": "todo",
+        "priority": "medium",
+        "estimated_hours": 15,
+        "role_focus": ["admin"]
+      },
+      {
+        "id": "T85",
+        "task": "纠纷处理和客服工作台",
+        "details": "建立完整的纠纷处理体系，包含投诉工单、仲裁流程、客服管理等",
+        "acceptance_criteria": ["用户投诉工单系统", "纠纷仲裁流程", "客服工作台", "处理结果跟踪", "满意度调研"],
+        "status": "todo",
+        "priority": "medium",
+        "estimated_hours": 20,
+        "role_focus": ["admin"]
+      },
+      {
+        "id": "T86",
+        "task": "平台运营分析看板",
+        "details": "开发运营数据分析看板，包含用户活跃度、增长指标、运营效果分析等",
+        "acceptance_criteria": ["用户活跃度分析", "增长趋势图表", "运营效果评估", "数据实时更新", "自定义报表"],
+        "status": "todo",
+        "priority": "low",
+        "estimated_hours": 18,
+        "role_focus": ["admin"]
+      }
+    ]
+  },
+  {
+    "epic": "Phase 10: 高级功能和系统优化",
+    "description": "实现高级功能特性，优化系统性能，提升用户体验，为平台长期发展奠定基础",
+    "tasks": [
+      {
+        "id": "T91",
+        "task": "智能推荐系统开发",
+        "details": "基于用户行为和偏好，开发教师推荐、课程推荐、学习路径推荐等智能系统",
+        "acceptance_criteria": ["教师个性化推荐", "课程智能匹配", "学习路径规划", "推荐效果评估", "推荐算法优化"],
+        "status": "todo",
+        "priority": "low",
+        "estimated_hours": 25,
+        "role_focus": ["student"]
+      },
+      {
+        "id": "T92",
+        "task": "社区和互动功能",
+        "details": "建立学习社区，支持用户交流、经验分享、问答互助等社交功能",
+        "acceptance_criteria": ["学习社区平台", "用户交流互动", "经验分享功能", "问答互助系统", "社区内容管理"],
+        "status": "todo",
+        "priority": "low",
+        "estimated_hours": 30,
+        "role_focus": ["student", "teacher"]
+      },
+      {
+        "id": "T93",
+        "task": "多语言国际化支持",
+        "details": "实现平台多语言支持，包含界面翻译、内容本地化、货币适配等",
+        "acceptance_criteria": ["多语言界面支持", "内容本地化", "货币单位适配", "时区处理", "文化适应性"],
+        "status": "todo",
+        "priority": "low",
+        "estimated_hours": 20,
+        "role_focus": ["all"]
+      },
+      {
+        "id": "T94",
+        "task": "移动端APP开发",
+        "details": "开发React Native移动端应用，提供原生移动体验",
+        "acceptance_criteria": ["iOS/Android APP", "原生性能优化", "推送通知", "离线功能支持", "应用商店发布"],
+        "status": "todo",
+        "priority": "low",
+        "estimated_hours": 60,
+        "role_focus": ["all"]
+      },
+      {
+        "id": "T95",
+        "task": "AI辅助教学功能",
+        "details": "集成AI技术，提供智能答疑、学习诊断、个性化练习等AI辅助功能",
+        "acceptance_criteria": ["AI智能答疑", "学习诊断分析", "个性化练习生成", "学习效果预测", "AI助教功能"],
+        "status": "todo",
+        "priority": "low",
+        "estimated_hours": 40,
+        "role_focus": ["student", "teacher"]
       }
     ]
   }

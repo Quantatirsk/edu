@@ -85,25 +85,17 @@ export const TeacherVerificationForm: React.FC = () => {
     termsAccepted: [
       validationRules.required('请同意服务条款'),
       {
-        test: (value: boolean) => value === true,
+        test: (value: unknown) => {
+          if (typeof value !== 'boolean') return false;
+          return value === true;
+        },
         message: '必须同意服务条款才能继续',
       },
     ],
   };
 
   // 主表单验证
-  const {
-    values,
-    errors,
-    touched,
-    isSubmitting,
-    isValid,
-    setValue,
-    setValues,
-    touchField,
-    setErrors,
-    handleSubmit,
-  } = useFormValidation(
+  const formValidation = useFormValidation<TeacherVerificationData>(
     {
       realName: '',
       idCard: '',
@@ -128,16 +120,30 @@ export const TeacherVerificationForm: React.FC = () => {
     }
   );
 
+  // 解构表单验证对象
+  const {
+    values,
+    errors,
+    touched,
+    isSubmitting,
+    isValid,
+    setValue,
+    touchField,
+    setErrors,
+    handleSubmit,
+  } = formValidation;
+
   // 异步验证（检查身份证和手机号是否已注册）
   const {
     asyncErrors,
     validatingFields,
     validateAsyncField,
   } = useAsyncValidation(
-    { values, errors, touched, isSubmitting, isValid, setValue, setValues, touchField, setErrors, handleSubmit } as any,
+    formValidation,
     {
       idCard: {
-        validator: async (idCard: string) => {
+        validator: async (value: unknown) => {
+          const idCard = value as string;
           if (!idCard || idCard.length < 18) return null;
           
           try {
@@ -152,7 +158,8 @@ export const TeacherVerificationForm: React.FC = () => {
         debounceMs: 500,
       },
       phone: {
-        validator: async (phone: string) => {
+        validator: async (value: unknown) => {
+          const phone = value as string;
           if (!phone || !/^1[3-9]\d{9}$/.test(phone)) return null;
           
           try {
@@ -240,12 +247,13 @@ export const TeacherVerificationForm: React.FC = () => {
       
       // 提交成功后跳转到审核页面
       navigate('/teacher/verification-pending');
-    } catch (error: any) {
-      if (error.response?.data?.errors) {
-        setErrors(error.response.data.errors);
+    } catch (error: unknown) {
+      const apiError = error as { response?: { data?: { errors?: Record<string, string>; message?: string } } };
+      if (apiError.response?.data?.errors) {
+        setErrors(apiError.response.data.errors);
       } else {
         setErrors({ 
-          general: error.response?.data?.message || '提交失败，请稍后重试' 
+          general: apiError.response?.data?.message || '提交失败，请稍后重试' 
         });
       }
       throw error;

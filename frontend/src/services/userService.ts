@@ -41,7 +41,7 @@ export interface UserActivity {
   id: string;
   type: 'login' | 'appointment_created' | 'appointment_cancelled' | 'review_posted' | 'profile_updated' | 'payment_made';
   description: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   createdAt: string;
   ipAddress?: string;
   userAgent?: string;

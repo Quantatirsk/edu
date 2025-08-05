@@ -64,7 +64,18 @@ export interface TeacherStatistics {
 export class TeacherService {
   // 获取教师列表
   static async getTeachers(params: TeacherSearchParams = {}): Promise<PaginatedTeachers> {
-    return apiRequest.get<PaginatedTeachers>('/teachers', { params });
+    const response = await apiRequest.get<PaginatedResponse<Teacher>>('/teachers', { params });
+    
+    // 转换后端返回的数据结构为前端期望的格式
+    return {
+      teachers: response.teachers || [],
+      total: response.total || 0,
+      page: Math.floor((response.skip || 0) / (response.limit || 20)) + 1,
+      limit: response.limit || 20,
+      totalPages: Math.ceil((response.total || 0) / (response.limit || 20)),
+      hasNext: (response.skip || 0) + (response.limit || 20) < (response.total || 0),
+      hasPrev: (response.skip || 0) > 0
+    };
   }
 
   // 获取教师详情
@@ -134,7 +145,9 @@ export class TeacherService {
 
   // 获取教师科目列表
   static async getSubjects(): Promise<Array<{ subject: string; count: number }>> {
-    return apiRequest.get<Array<{ subject: string; count: number }>>('/teachers/subjects');
+    const response = await apiRequest.get<Array<{ subject: string; count: number }>>('/teachers/subjects');
+    // 后端直接返回数组，不需要额外处理
+    return Array.isArray(response) ? response : [];
   }
 
   // 获取教师地区列表

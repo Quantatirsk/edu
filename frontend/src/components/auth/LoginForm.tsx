@@ -85,28 +85,47 @@ const LoginForm: React.FC<LoginFormProps> = ({
       // 调用真实的登录API
       const { AuthService } = await import('../../services/authService');
       
+      console.log('🔑 Attempting login for:', formData.email);
       const tokens = await AuthService.login({
         email: formData.email,
         password: formData.password,
       });
+      
+      console.log('✅ Login successful, tokens received:', {
+        hasAccessToken: !!tokens.access_token,
+        hasRefreshToken: !!tokens.refresh_token,
+        tokenType: tokens.token_type,
+        expiresIn: tokens.expires_in
+      });
+
+      // 🔥 关键修复：先临时存储token，确保getCurrentUser能访问到
+      console.log('🔄 Temporarily storing token for user profile fetch...');
+      setAuth({
+        user: null, // 先设为null
+        token: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        expiresIn: tokens.expires_in,
+        rememberMe: formData.rememberMe,
+      });
 
       // 获取用户信息
+      console.log('👤 Fetching user profile...');
       const userProfile = await AuthService.getCurrentUser();
+      console.log('✅ User profile received:', userProfile);
 
       // 转换用户数据格式以匹配前端类型
       const user = {
-        id: userProfile.email, // 使用email作为临时ID
+        id: userProfile.id, // 使用后端返回的实际用户ID (UUID)
         name: userProfile.name,
         email: userProfile.email,
         phone: userProfile.phone,
         role: userProfile.role as 'student' | 'teacher' | 'admin',
         avatar: userProfile.avatar,
-        verified: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        // 移除硬编码字段，这些可能导致类型不匹配
       };
       
-      // 使用 authStore 设置认证状态
+      console.log('🔄 Setting final auth state with user:', user);
+      // 使用 authStore 设置最终认证状态（包含用户信息）
       setAuth({
         user,
         token: tokens.access_token,
@@ -115,13 +134,42 @@ const LoginForm: React.FC<LoginFormProps> = ({
         rememberMe: formData.rememberMe,
       });
       
+      console.log('🎉 Authentication complete!');
       onSuccess?.();
       if (redirectTo) {
         window.location.href = redirectTo;
       }
     } catch (error) {
-      console.error('Login failed:', error);
-      setLoginError('登录失败，请检查邮箱和密码');
+      console.error('❌ Login failed with detailed error:', error);
+      
+      // 更好的错误处理，显示具体错误信息
+      let errorMessage = '登录失败，请检查邮箱和密码';
+      
+      if (error instanceof Error) {
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
+        
+        // 网络或API错误的具体处理
+        if (error.message.includes('Network Error') || error.message.includes('timeout')) {
+          errorMessage = '网络连接失败，请检查网络设置';
+        } else if (error.message.includes('401')) {
+          errorMessage = '邮箱或密码错误，请检查后重试';
+        } else if (error.message.includes('403')) {
+          errorMessage = '账户已被禁用，请联系管理员';
+        } else if (error.message.includes('422')) {
+          errorMessage = '输入信息格式错误，请检查邮箱格式';
+        } else if (error.message.includes('500')) {
+          errorMessage = '服务器错误，请稍后重试';
+        } else {
+          // 显示实际错误信息用于调试
+          errorMessage = `登录失败: ${error.message}`;
+        }
+      }
+      
+      setLoginError(errorMessage);
     }
   };
 

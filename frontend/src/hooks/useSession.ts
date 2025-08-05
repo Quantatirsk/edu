@@ -4,7 +4,7 @@
 
 import { useEffect, useCallback, useRef } from 'react';
 import { useAuthStore, useAuthActions } from '../stores/authStore';
-import { AuthService, TokenManager } from '../services/authService';
+import { AuthService, AuthStateManager } from '../services/authService';
 
 interface SessionConfig {
   // 自动刷新配置
@@ -47,7 +47,7 @@ export const useSession = (config: Partial<SessionConfig> = {}) => {
   // 刷新令牌
   const refreshToken = useCallback(async () => {
     try {
-      const refreshTokenValue = TokenManager.getRefreshToken();
+      const refreshTokenValue = AuthStateManager.getRefreshToken();
       if (!refreshTokenValue) {
         console.warn('No refresh token available');
         return false;
@@ -55,8 +55,14 @@ export const useSession = (config: Partial<SessionConfig> = {}) => {
 
       const newTokens = await AuthService.refreshAccessToken(refreshTokenValue);
       
-      // 更新token存储
-      TokenManager.setTokens(newTokens);
+      // 更新AuthStore中的token
+      const authStore = AuthStateManager.getAuthStore();
+      authStore.setAuth({
+        user: authStore.user!,
+        token: newTokens.access_token,
+        refreshToken: newTokens.refresh_token,
+        expiresIn: newTokens.expires_in,
+      });
       
       console.log('Token refreshed successfully');
       return true;

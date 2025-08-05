@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import ErrorBoundary from '../ErrorBoundary';
 import { Loader2 } from 'lucide-react';
+import { ProgressiveLoadStage, useProgressiveLoader } from '../../utils/lazyUtils';
 
 // 通用加载组件
 export const PageLoader: React.FC<{ message?: string }> = ({ 
@@ -89,7 +90,7 @@ export const LazyWrapperWithTimeout: React.FC<LazyWrapperWithTimeoutProps> = ({
 
 // 预加载触发器组件
 interface PreloadTriggerProps {
-  preloadFn: () => Promise<any>;
+  preloadFn: () => Promise<unknown>;
   children: React.ReactNode;
   triggerDistance?: number; // 触发预加载的距离（px）
 }
@@ -134,11 +135,7 @@ export const PreloadTrigger: React.FC<PreloadTriggerProps> = ({
 
 // 渐进式加载组件
 interface ProgressiveLoaderProps {
-  stages: Array<{
-    component: React.LazyExoticComponent<any>;
-    fallback?: React.ComponentType;
-    priority: number;
-  }>;
+  stages: ProgressiveLoadStage[];
   onStageLoad?: (stage: number) => void;
 }
 
@@ -146,25 +143,7 @@ export const ProgressiveLoader: React.FC<ProgressiveLoaderProps> = ({
   stages,
   onStageLoad,
 }) => {
-  const [loadedStages, setLoadedStages] = React.useState<number[]>([]);
-  
-  // 按优先级排序
-  const sortedStages = React.useMemo(() => 
-    stages
-      .map((stage, index) => ({ ...stage, originalIndex: index }))
-      .sort((a, b) => a.priority - b.priority),
-    [stages]
-  );
-
-  React.useEffect(() => {
-    // 逐步加载各阶段
-    sortedStages.forEach((stage, index) => {
-      setTimeout(() => {
-        setLoadedStages(prev => [...prev, stage.originalIndex]);
-        onStageLoad?.(stage.originalIndex);
-      }, index * 100); // 每100ms加载一个阶段
-    });
-  }, [sortedStages, onStageLoad]);
+  const { loadedStages } = useProgressiveLoader(stages, onStageLoad);
 
   return (
     <>
@@ -189,76 +168,6 @@ export const ProgressiveLoader: React.FC<ProgressiveLoaderProps> = ({
   );
 };
 
-// 智能预加载Hook
-export const useSmartPreload = (
-  preloadFns: Array<() => Promise<any>>,
-  conditions: {
-    userInteraction?: boolean;
-    networkSpeed?: 'slow' | 'fast' | 'any';
-    batteryLevel?: number;
-    prefersReducedData?: boolean;
-  } = {}
-) => {
-  const [hasPreloaded, setHasPreloaded] = React.useState(false);
-  
-  React.useEffect(() => {
-    if (hasPreloaded) return;
-
-    const shouldPreload = () => {
-      // 检查用户交互
-      if (conditions.userInteraction && !document.hasFocus()) {
-        return false;
-      }
-
-      // 检查网络速度
-      if (conditions.networkSpeed && 'connection' in navigator) {
-        const connection = (navigator as any).connection;
-        if (conditions.networkSpeed === 'fast' && connection.effectiveType === '2g') {
-          return false;
-        }
-        if (conditions.networkSpeed === 'slow' && connection.effectiveType === '4g') {
-          return false;
-        }
-      }
-
-      // 检查电池电量
-      if (conditions.batteryLevel && 'getBattery' in navigator) {
-        (navigator as any).getBattery().then((battery: any) => {
-          if (battery.level < (conditions.batteryLevel! / 100)) {
-            return false;
-          }
-        });
-      }
-
-      // 检查数据节省偏好
-      if (conditions.prefersReducedData && 'connection' in navigator) {
-        const connection = (navigator as any).connection;
-        if (connection.saveData) {
-          return false;
-        }
-      }
-
-      return true;
-    };
-
-    if (shouldPreload()) {
-      // 在空闲时预加载
-      if ('requestIdleCallback' in window) {
-        requestIdleCallback(() => {
-          Promise.all(preloadFns.map(fn => fn().catch(console.warn)))
-            .then(() => setHasPreloaded(true));
-        });
-      } else {
-        setTimeout(() => {
-          Promise.all(preloadFns.map(fn => fn().catch(console.warn)))
-            .then(() => setHasPreloaded(true));
-        }, 1000);
-      }
-    }
-  }, [preloadFns, conditions, hasPreloaded]);
-
-  return hasPreloaded;
-};
 
 // 分块加载组件
 interface ChunkedLoaderProps<T> {

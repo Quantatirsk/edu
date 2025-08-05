@@ -3,7 +3,7 @@ import { lazy } from 'react';
 import type { ComponentType, LazyExoticComponent } from 'react';
 
 // 懒加载组件包装器
-export const createLazyComponent = <T extends ComponentType<any>>(
+export const createLazyComponent = <T extends ComponentType<Record<string, unknown>>>(
   importFn: () => Promise<{ default: T }>,
   displayName?: string
 ): LazyExoticComponent<T> => {
@@ -11,14 +11,14 @@ export const createLazyComponent = <T extends ComponentType<any>>(
   
   if (displayName && process.env.NODE_ENV === 'development') {
     // displayName 仅在开发环境设置
-    (LazyComponent as any).displayName = `Lazy(${displayName})`;
+    (LazyComponent as unknown as ComponentType & { displayName?: string }).displayName = `Lazy(${displayName})`;
   }
   
   return LazyComponent;
 };
 
 // 预加载函数
-export const preloadComponent = (importFn: () => Promise<any>): void => {
+export const preloadComponent = (importFn: () => Promise<{ default: ComponentType }>): void => {
   // 在空闲时间预加载组件
   if ('requestIdleCallback' in window) {
     requestIdleCallback(() => {
@@ -37,7 +37,7 @@ export const preloadComponent = (importFn: () => Promise<any>): void => {
 };
 
 // 预加载多个组件
-export const preloadComponents = (importFns: Array<() => Promise<any>>): void => {
+export const preloadComponents = (importFns: Array<() => Promise<{ default: ComponentType }>>): void => {
   importFns.forEach(preloadComponent);
 };
 
@@ -257,7 +257,7 @@ export class PerformanceMonitor {
 export const performanceMonitor = new PerformanceMonitor();
 
 // Web Vitals 监控
-export const measureWebVitals = (onPerfEntry?: (metric: any) => void) => {
+export const measureWebVitals = (onPerfEntry?: (metric: { name: string; value: number; id?: string }) => void) => {
   if (onPerfEntry && typeof onPerfEntry === 'function') {
     // 暂时简化实现，避免导入错误
     console.log('Web Vitals monitoring initialized');
@@ -266,9 +266,9 @@ export const measureWebVitals = (onPerfEntry?: (metric: any) => void) => {
 };
 
 // 内存使用监控
-export const getMemoryUsage = (): any | null => {
+export const getMemoryUsage = (): { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } | null => {
   if ('memory' in performance) {
-    return (performance as any).memory;
+    return (performance as Performance & { memory: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
   }
   return null;
 };
@@ -304,7 +304,7 @@ export const optimizeResourceLoading = () => {
 };
 
 // 防抖和节流
-export const debounce = <T extends (...args: any[]) => any>(
+export const debounce = <T extends (...args: never[]) => unknown>(
   func: T,
   delay: number
 ): ((...args: Parameters<T>) => void) => {
@@ -315,7 +315,7 @@ export const debounce = <T extends (...args: any[]) => any>(
   };
 };
 
-export const throttle = <T extends (...args: any[]) => any>(
+export const throttle = <T extends (...args: never[]) => unknown>(
   func: T,
   delay: number
 ): ((...args: Parameters<T>) => void) => {
@@ -330,7 +330,7 @@ export const throttle = <T extends (...args: any[]) => any>(
 };
 
 // 缓存装饰器
-export const memoize = <T extends (...args: any[]) => any>(
+export const memoize = <T extends (...args: never[]) => unknown>(
   func: T,
   keyGenerator?: (...args: Parameters<T>) => string
 ): T => {
@@ -343,7 +343,7 @@ export const memoize = <T extends (...args: any[]) => any>(
       return cache.get(key)!;
     }
     
-    const result = func(...args);
+    const result = func(...args) as ReturnType<T>;
     cache.set(key, result);
     return result;
   }) as T;
@@ -351,3 +351,202 @@ export const memoize = <T extends (...args: any[]) => any>(
 
 // 导入React用于hooks
 import React from 'react';
+
+// 内存管理器
+export class MemoryManager {
+  private static cache = new Map<string, { data: unknown; timestamp: number; ttl: number }>();
+  
+  static set(key: string, data: unknown, ttl: number = 300000) { // 默认5分钟
+    this.cache.set(key, {
+      data,
+      timestamp: Date.now(),
+      ttl
+    });
+  }
+  
+  static get(key: string): unknown | null {
+    const item = this.cache.get(key);
+    if (!item) return null;
+    
+    if (Date.now() - item.timestamp > item.ttl) {
+      this.cache.delete(key);
+      return null;
+    }
+    
+    return item.data;
+  }
+  
+  static clear() {
+    this.cache.clear();
+  }
+  
+  static cleanup() {
+    const now = Date.now();
+    for (const [key, item] of this.cache.entries()) {
+      if (now - item.timestamp > item.ttl) {
+        this.cache.delete(key);
+      }
+    }
+  }
+  
+  static getSize() {
+    return this.cache.size;
+  }
+}
+
+// 定期清理缓存
+if (typeof window !== 'undefined') {
+  setInterval(() => {
+    MemoryManager.cleanup();
+  }, 60000); // 每分钟清理一次
+}
+
+// 网络状态监控
+export class NetworkMonitor {
+  private static listeners: ((status: boolean) => void)[] = [];
+  
+  static init() {
+    if (typeof window !== 'undefined' && 'navigator' in window && 'onLine' in navigator) {
+      window.addEventListener('online', () => this.notify(true));
+      window.addEventListener('offline', () => this.notify(false));
+    }
+  }
+  
+  static isOnline(): boolean {
+    return typeof navigator !== 'undefined' ? navigator.onLine : true;
+  }
+  
+  static addListener(callback: (status: boolean) => void) {
+    this.listeners.push(callback);
+  }
+  
+  static removeListener(callback: (status: boolean) => void) {
+    const index = this.listeners.indexOf(callback);
+    if (index > -1) {
+      this.listeners.splice(index, 1);
+    }
+  }
+  
+  private static notify(status: boolean) {
+    this.listeners.forEach(callback => callback(status));
+  }
+}
+
+// 初始化性能优化
+export function initPerformanceOptimizations() {
+  if (typeof window === 'undefined') return;
+  
+  // 初始化网络监控
+  NetworkMonitor.init();
+  
+  // 预连接重要域名
+  const link = document.createElement('link');
+  link.rel = 'dns-prefetch';
+  link.href = '//api.example.com';
+  document.head.appendChild(link);
+  
+  // 监控长任务
+  if ('PerformanceObserver' in window) {
+    try {
+      const observer = new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          if (entry.duration > 50) {
+            console.warn('Long task detected:', entry);
+          }
+        }
+      });
+      
+      observer.observe({ entryTypes: ['longtask'] });
+    } catch {
+      console.warn('Performance observer not supported');
+    }
+  }
+  
+  // 监控内存使用
+  if ('memory' in performance) {
+    setInterval(() => {
+      const memory = (performance as Performance & { memory: { usedJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
+      if (memory.usedJSHeapSize > memory.jsHeapSizeLimit * 0.9) {
+        console.warn('High memory usage detected');
+        MemoryManager.clear(); // 清理缓存
+      }
+    }, 30000);
+  }
+}
+
+// React 性能优化 hooks
+export function usePerformanceMonitor(label: string) {
+  const endTimer = React.useCallback(() => {
+    return performanceMonitor.measure(label);
+  }, [label]);
+  
+  React.useEffect(() => {
+    performanceMonitor.mark(label);
+    return () => {
+      endTimer();
+    };
+  }, [label, endTimer]);
+  
+  return {
+    end: endTimer,
+    getMetrics: () => performanceMonitor.getAllMetrics()[label]
+  };
+}
+
+// 组件性能监控 HOC
+export function withPerformanceMonitor<P extends object>(
+  WrappedComponent: React.ComponentType<P>,
+  componentName?: string
+) {
+  const displayName = componentName || WrappedComponent.displayName || WrappedComponent.name || 'Component';
+  
+  const WithPerformanceMonitor = React.forwardRef<HTMLElement, P>((props, ref) => {
+    const { end } = usePerformanceMonitor(`${displayName}-render`);
+    
+    React.useEffect(() => {
+      return () => {
+        end();
+      };
+    });
+    
+    return React.createElement(WrappedComponent, { ...props, ref } as P & { ref?: React.Ref<HTMLElement> });
+  });
+  
+  WithPerformanceMonitor.displayName = `withPerformanceMonitor(${displayName})`;
+  
+  return WithPerformanceMonitor;
+}
+
+// 批量更新优化
+export function batchUpdates<T>(
+  items: T[],
+  processor: (item: T) => void,
+  batchSize: number = 50,
+  delay: number = 0
+): Promise<void> {
+  return new Promise((resolve) => {
+    let index = 0;
+    
+    function processBatch() {
+      const end = Math.min(index + batchSize, items.length);
+      
+      for (let i = index; i < end; i++) {
+        processor(items[i]);
+      }
+      
+      index = end;
+      
+      if (index < items.length) {
+        if (delay > 0) {
+          setTimeout(processBatch, delay);
+        } else {
+          requestAnimationFrame(processBatch);
+        }
+      } else {
+        resolve();
+      }
+    }
+    
+    processBatch();
+  });
+}

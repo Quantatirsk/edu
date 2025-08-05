@@ -35,13 +35,18 @@ export interface Teacher extends User {
   experience: number;
   rating: number;
   reviews: number;
+  reviews_count: number;
   price: number;
   location: Location;
-  detailedRatings: DetailedRatings;
+  detailed_ratings?: DetailedRatings;
+  detailedRatings?: DetailedRatings;
   availability: string[];
   certifications: string[];
-  teachingStyle: string;
+  teaching_style?: string;
+  teachingStyle?: string;
   description: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 // 学生类型
@@ -57,17 +62,26 @@ export interface Appointment {
   id: string;
   studentId: string;
   teacherId: string;
+  studentName: string;
+  teacherName: string;
   subject: string;
   date: string;
   time: string;
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  duration?: number;
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no-show' | 'rescheduled';
   price: number;
-  notes: string;
+  notes?: string;
+  cancelReason?: string;
+  rating?: number;
+  review?: string;
   lessonType: 'single' | 'package';
   packageInfo?: {
     totalLessons: number;
     completedLessons: number;
   };
+  createdAt: string;
+  updatedAt: string;
+  completedAt?: string;
 }
 
 // 评价类型

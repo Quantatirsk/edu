@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React from 'react';
 import { render as rtlRender } from '@testing-library/react';
 import type { RenderOptions } from '@testing-library/react';
@@ -65,7 +66,7 @@ const customRender = (
 };
 
 // 创建mock函数的工具
-export const createMockFunction = (implementation?: any) => {
+export const createMockFunction = <T extends (...args: never[]) => unknown>(implementation?: T) => {
   return vi.fn(implementation);
 };
 
@@ -74,15 +75,15 @@ export const waitForAsync = () =>
   new Promise(resolve => setTimeout(resolve, 0));
 
 // Mock API响应
-export const mockApiResponse = (data: any, delay = 0) => {
-  return new Promise((resolve) => {
+export const mockApiResponse = <T,>(data: T, delay = 0) => {
+  return new Promise<T>((resolve) => {
     setTimeout(() => resolve(data), delay);
   });
 };
 
 // Mock API错误
 export const mockApiError = (message = 'API Error', status = 500) => {
-  const error = new Error(message) as any;
+  const error = new Error(message) as Error & { response: { status: number; data: { message: string } } };
   error.response = {
     status,
     data: { message },
@@ -198,7 +199,7 @@ export const createMockFile = (
 };
 
 // 模拟FormData
-export const createMockFormData = (data: Record<string, any> = {}) => {
+export const createMockFormData = (data: Record<string, unknown> = {}) => {
   const formData = new FormData();
   Object.entries(data).forEach(([key, value]) => {
     if (value instanceof File) {

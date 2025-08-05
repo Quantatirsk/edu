@@ -363,7 +363,7 @@ export const useTeacherStore = create<TeacherState & TeacherActions>()(
     // 收藏操作
     addToFavorites: (teacherId) => {
       set((state) => ({
-        favorites: [...new Set([...state.favorites, teacherId])],
+        favorites: Array.from(new Set([...state.favorites, teacherId])),
       }));
     },
     
@@ -603,7 +603,7 @@ export const useTeacherStore = create<TeacherState & TeacherActions>()(
       }));
     },
     
-    incrementTeacherView: (_teacherId) => {
+    incrementTeacherView: () => {
       set((state) => ({
         statistics: {
           ...state.statistics,
@@ -661,6 +661,7 @@ export const useTeacherLoading = () => useTeacherStore((state) => ({
 export const useTeacherStatistics = () => useTeacherStore((state) => state.statistics);
 
 // 操作 Hooks
+// 修复 actions 的稳定性问题 - 只选择 actions，不包含状态
 export const useTeacherActions = () => useTeacherStore((state) => ({
   setTeachers: state.setTeachers,
   selectTeacher: state.selectTeacher,
@@ -680,4 +681,5 @@ export const useTeacherActions = () => useTeacherStore((state) => ({
   searchTeachers: state.searchTeachers,
   getNearbyTeachers: state.getNearbyTeachers,
   getTeachersBySubject: state.getTeachersBySubject,
+  setLoading: state.setLoading,
 }));

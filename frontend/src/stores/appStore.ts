@@ -45,7 +45,7 @@ export interface SearchHistory {
 export interface RecentItem {
   id: string;
   type: 'teacher' | 'course' | 'student';
-  data: any;
+  data: Record<string, unknown>;
   timestamp: number;
 }
 
@@ -104,14 +104,14 @@ export interface AppState {
     pendingOperations: Array<{
       id: string;
       type: string;
-      data: any;
+      data: unknown;
       timestamp: number;
     }>;
     conflicts: Array<{
       id: string;
       type: string;
-      localData: any;
-      remoteData: any;
+      localData: unknown;
+      remoteData: unknown;
       timestamp: number;
     }>;
   };
@@ -345,7 +345,7 @@ export const useAppStore = create<AppState & AppActions>()(
             get().setLocationPermission('granted');
             
             return location;
-          } catch (error) {
+          } catch {
             get().setLocationPermission('denied');
             return null;
           }

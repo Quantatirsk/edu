@@ -238,6 +238,15 @@ class PaginatedResponse(BaseModel):
     pages: int = Field(..., description="总页数")
 
 # 认证相关模型
+class UserProfile(BaseModel):
+    """用户个人资料模型 - 包含ID字段用于/auth/me端点"""
+    id: str = Field(..., description="用户ID")
+    name: str = Field(..., description="用户姓名")
+    email: EmailStr = Field(..., description="邮箱地址")
+    phone: str = Field(..., description="手机号码")
+    role: UserRole = Field(..., description="用户角色")
+    avatar: Optional[str] = Field(None, description="头像URL")
+
 class UserRegister(BaseModel):
     """用户注册请求模型"""
     name: str = Field(..., min_length=2, max_length=50, description="用户姓名")

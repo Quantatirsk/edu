@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
+import { useMemo } from 'react';
 
 // 通知类型
 export interface Notification {
@@ -21,7 +22,7 @@ export interface Notification {
 export interface Modal {
   id: string;
   component: string;
-  props?: Record<string, any>;
+  props?: Record<string, unknown>;
   options?: {
     closable?: boolean;
     size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
@@ -119,7 +120,7 @@ export interface UIState {
   };
   
   // 缓存的组件状态
-  componentStates: Record<string, any>;
+  componentStates: Record<string, unknown>;
 }
 
 // UI操作接口
@@ -137,7 +138,7 @@ export interface UIActions {
   openModal: (modal: Omit<Modal, 'id'>) => string;
   closeModal: (id: string) => void;
   closeAllModals: () => void;
-  updateModalProps: (id: string, props: Record<string, any>) => void;
+  updateModalProps: (id: string, props: Record<string, unknown>) => void;
   
   // 加载状态管理
   showLoading: (options?: Omit<LoadingState, 'id'>) => string;
@@ -180,8 +181,8 @@ export interface UIActions {
   hideContextMenu: () => void;
   
   // 组件状态缓存
-  setComponentState: (key: string, state: any) => void;
-  getComponentState: (key: string) => any;
+  setComponentState: (key: string, state: unknown) => void;
+  getComponentState: (key: string) => unknown;
   clearComponentState: (key: string) => void;
   
   // 工具方法
@@ -490,6 +491,7 @@ export const useUIStore = create<UIState & UIActions>()(
     clearComponentState: (key) => {
       set((state) => {
         const { [key]: _, ...rest } = state.componentStates;
+        void _; // Explicitly acknowledge we don't use this value
         return { componentStates: rest };
       });
     },
@@ -511,30 +513,54 @@ export const usePageState = () => useUIStore((state) => state.page);
 export const useTheme = () => useUIStore((state) => state.theme);
 export const useDeviceState = () => useUIStore((state) => state.device);
 
-// 操作 Hooks
-export const useNotificationActions = () => useUIStore((state) => ({
-  addNotification: state.addNotification,
-  removeNotification: state.removeNotification,
-  clearNotifications: state.clearNotifications,
-  showSuccess: state.showSuccess,
-  showError: state.showError,
-  showWarning: state.showWarning,
-  showInfo: state.showInfo,
-}));
+// 操作 Hooks - 使用 useMemo 稳定化返回对象
+export const useNotificationActions = () => {
+  const addNotification = useUIStore((state) => state.addNotification);
+  const removeNotification = useUIStore((state) => state.removeNotification);
+  const clearNotifications = useUIStore((state) => state.clearNotifications);
+  const showSuccess = useUIStore((state) => state.showSuccess);
+  const showError = useUIStore((state) => state.showError);
+  const showWarning = useUIStore((state) => state.showWarning);
+  const showInfo = useUIStore((state) => state.showInfo);
 
-export const useModalActions = () => useUIStore((state) => ({
-  openModal: state.openModal,
-  closeModal: state.closeModal,
-  closeAllModals: state.closeAllModals,
-  updateModalProps: state.updateModalProps,
-}));
+  return useMemo(() => ({
+    addNotification,
+    removeNotification,
+    clearNotifications,
+    showSuccess,
+    showError,
+    showWarning,
+    showInfo,
+  }), [addNotification, removeNotification, clearNotifications, showSuccess, showError, showWarning, showInfo]);
+};
 
-export const useLoadingActions = () => useUIStore((state) => ({
-  showLoading: state.showLoading,
-  hideLoading: state.hideLoading,
-  updateLoadingProgress: state.updateLoadingProgress,
-  setGlobalLoading: state.setGlobalLoading,
-}));
+export const useModalActions = () => {
+  const openModal = useUIStore((state) => state.openModal);
+  const closeModal = useUIStore((state) => state.closeModal);
+  const closeAllModals = useUIStore((state) => state.closeAllModals);
+  const updateModalProps = useUIStore((state) => state.updateModalProps);
+
+  return useMemo(() => ({
+    openModal,
+    closeModal,
+    closeAllModals,
+    updateModalProps,
+  }), [openModal, closeModal, closeAllModals, updateModalProps]);
+};
+
+export const useLoadingActions = () => {
+  const showLoading = useUIStore((state) => state.showLoading);
+  const hideLoading = useUIStore((state) => state.hideLoading);
+  const updateLoadingProgress = useUIStore((state) => state.updateLoadingProgress);
+  const setGlobalLoading = useUIStore((state) => state.setGlobalLoading);
+
+  return useMemo(() => ({
+    showLoading,
+    hideLoading,
+    updateLoadingProgress,
+    setGlobalLoading,
+  }), [showLoading, hideLoading, updateLoadingProgress, setGlobalLoading]);
+};
 
 export const useLayoutActions = () => useUIStore((state) => ({
   toggleSidebar: state.toggleSidebar,

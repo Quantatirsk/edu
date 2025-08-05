@@ -57,7 +57,7 @@ export const queryKeys = {
   // 教师相关
   teachers: () => [...queryKeys.all, 'teachers'] as const,
   teacher: (id: string) => [...queryKeys.teachers(), 'teacher', id] as const,
-  teachersList: (filters?: Record<string, any>) => 
+  teachersList: (filters?: Record<string, unknown>) => 
     [...queryKeys.teachers(), 'list', filters] as const,
   teachersNearby: (location?: { lat: number; lng: number }) => 
     [...queryKeys.teachers(), 'nearby', location] as const,
@@ -131,7 +131,7 @@ export const invalidateQueries = {
 // 预取数据工具函数
 export const prefetchQueries = {
   // 预取教师列表
-  teachersList: async (filters?: Record<string, any>) => {
+  teachersList: async (filters?: Record<string, unknown>) => {
     await queryClient.prefetchQuery({
       queryKey: queryKeys.teachersList(filters),
       staleTime: 5 * 60 * 1000, // 5分钟
@@ -255,7 +255,7 @@ export const errorHandler = {
   },
   
   // 突变错误处理
-  handleMutationError: (error: ApiError, context?: any) => {
+  handleMutationError: (error: ApiError, context?: { previousData?: unknown }) => {
     console.error('Mutation Error:', error, context);
     
     // 乐观更新失败时的回滚逻辑

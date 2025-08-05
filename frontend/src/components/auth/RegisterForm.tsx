@@ -184,9 +184,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       } else {
         setRegisterError(response.message || '注册失败，请重试');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Registration failed:', error);
-      setRegisterError(error.message || '注册失败，请检查网络连接或联系客服');
+      const errorMessage = error instanceof Error ? error.message : '注册失败，请检查网络连接或联系客服';
+      setRegisterError(errorMessage);
     } finally {
       setIsLoading(false);
     }

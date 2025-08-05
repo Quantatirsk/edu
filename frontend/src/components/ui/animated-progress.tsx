@@ -8,9 +8,9 @@ interface AnimatedProgressProps extends React.ComponentPropsWithoutRef<typeof Pr
 }
 
 const AnimatedProgress = React.forwardRef<
-  React.ElementRef<typeof ProgressPrimitive.Root>,
+  React.ComponentRef<typeof ProgressPrimitive.Root>,
   AnimatedProgressProps
->(({ className, value = 0, showAnimation = true, ...props }, ref) => {
+>(({ className, value = 0, ...props }, ref) => {
   const [displayValue, setDisplayValue] = React.useState(value);
 
   // Smooth transition when value changes

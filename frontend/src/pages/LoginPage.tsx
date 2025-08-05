@@ -7,8 +7,12 @@ import { useAuthStatus } from '../stores/authStore';
 const LoginPage: React.FC = () => {
   const { isAuthenticated } = useAuthStatus();
 
+  // 调试信息：检查认证状态
+  console.log('LoginPage: isAuthenticated =', isAuthenticated);
+
   // 如果已经登录，重定向到首页
   if (isAuthenticated) {
+    console.log('LoginPage: Redirecting to home because user is authenticated');
     return <Navigate to="/" replace />;
   }
 

@@ -3,6 +3,7 @@ export * from './authStore';
 export * from './uiStore';
 export * from './appStore';
 export * from './teacherStore';
+export * from './appointmentStore';
 
 // Type exports for convenience
 export type {
@@ -35,11 +36,20 @@ export type {
   TeacherViewMode,
 } from './teacherStore';
 
+export type {
+  AppointmentState,
+  AppointmentActions,
+  AppointmentFilters,
+  AppointmentSortOption,
+  AppointmentStatus,
+} from './appointmentStore';
+
 // Store combination utilities
 import { useAuthStore } from './authStore';
 import { useUIStore } from './uiStore';
 import { useAppStore } from './appStore';
 import { useTeacherStore } from './teacherStore';
+import { useAppointmentStore } from './appointmentStore';
 
 // Combined state selectors
 export const useGlobalState = () => ({
@@ -47,6 +57,7 @@ export const useGlobalState = () => ({
   ui: useUIStore.getState(),
   app: useAppStore.getState(),
   teacher: useTeacherStore.getState(),
+  appointment: useAppointmentStore.getState(),
 });
 
 // Global reset function
@@ -55,6 +66,7 @@ export const resetAllStores = () => {
   useUIStore.getState().reset();
   useAppStore.getState().reset();
   useTeacherStore.getState().reset();
+  useAppointmentStore.getState().reset();
 };
 
 // Store subscription utilities
@@ -63,12 +75,14 @@ export const subscribeToStores = (callback: () => void) => {
   const unsubUI = useUIStore.subscribe(callback);
   const unsubApp = useAppStore.subscribe(callback);
   const unsubTeacher = useTeacherStore.subscribe(callback);
+  const unsubAppointment = useAppointmentStore.subscribe(callback);
   
   return () => {
     unsubAuth();
     unsubUI();
     unsubApp();
     unsubTeacher();
+    unsubAppointment();
   };
 };
 
@@ -97,6 +111,12 @@ export const getStoreStats = () => {
         selectedTeacher: useTeacherStore.getState().selectedTeacher?.name || 'None',
         favorites: useTeacherStore.getState().favorites.length,
       },
+      appointment: {
+        totalAppointments: useAppointmentStore.getState().appointments.length,
+        filteredAppointments: useAppointmentStore.getState().filteredAppointments.length,
+        selectedAppointment: useAppointmentStore.getState().selectedAppointment?.id || 'None',
+        upcomingAppointments: useAppointmentStore.getState().statistics.upcomingAppointments,
+      },
     };
   }
   return null;
@@ -112,7 +132,7 @@ export const exportStoreData = () => {
   };
 };
 
-export const importStoreData = (data: any) => {
+export const importStoreData = (data: { auth?: unknown; ui?: unknown; teacher?: unknown; app?: unknown }) => {
   try {
     if (data.auth) {
       useAuthStore.persist.setOptions({
@@ -134,11 +154,12 @@ export const importStoreData = (data: any) => {
 // Debug utilities for development
 if (import.meta.env.DEV) {
   // Expose stores to window for debugging
-  (window as any).stores = {
+  (window as Window & { stores?: Record<string, unknown> }).stores = {
     auth: useAuthStore,
     ui: useUIStore,
     app: useAppStore,
     teacher: useTeacherStore,
+    appointment: useAppointmentStore,
     getStats: getStoreStats,
     reset: resetAllStores,
     export: exportStoreData,

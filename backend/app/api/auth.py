@@ -24,6 +24,7 @@ from ..models.schemas import (
     Token, 
     RefreshTokenRequest,
     UserBase,
+    UserProfile,
     APIResponse,
     PasswordResetRequest,
     PasswordReset,
@@ -258,14 +259,15 @@ async def refresh_token(refresh_data: RefreshTokenRequest, db: Session = Depends
             detail=f"令牌刷新失败: {str(e)}"
         )
 
-@router.get("/me", response_model=UserBase, summary="获取当前用户信息")
+@router.get("/me", response_model=UserProfile, summary="获取当前用户信息")
 async def get_me(current_user: User = Depends(auth_service.get_current_user)):
     """
     获取当前用户信息
     
     需要在请求头中包含有效的访问令牌
     """
-    return UserBase(
+    return UserProfile(
+        id=current_user.id,
         name=current_user.name,
         email=current_user.email,
         phone=current_user.phone,

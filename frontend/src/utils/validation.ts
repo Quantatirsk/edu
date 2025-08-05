@@ -1,6 +1,9 @@
+// 导入React用于hooks
+import React from 'react';
+
 // 表单验证工具类
 export type ValidationRule = {
-  test: (value: any) => boolean;
+  test: (value: unknown) => boolean;
   message: string;
 };
 
@@ -17,7 +20,7 @@ export type ValidationResult = {
 export const validationRules = {
   // 必填项验证
   required: (message: string = '此字段为必填项'): ValidationRule => ({
-    test: (value: any) => {
+    test: (value: unknown) => {
       if (value === null || value === undefined) return false;
       if (typeof value === 'string') return value.trim().length > 0;
       if (Array.isArray(value)) return value.length > 0;
@@ -28,8 +31,9 @@ export const validationRules = {
 
   // 邮箱验证
   email: (message: string = '请输入有效的邮箱地址'): ValidationRule => ({
-    test: (value: string) => {
+    test: (value: unknown) => {
       if (!value) return true; // 空值通过，由required规则处理
+      if (typeof value !== 'string') return false;
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return emailRegex.test(value);
     },
@@ -38,8 +42,9 @@ export const validationRules = {
 
   // 手机号验证（中国大陆）
   phone: (message: string = '请输入有效的手机号码'): ValidationRule => ({
-    test: (value: string) => {
+    test: (value: unknown) => {
       if (!value) return true;
+      if (typeof value !== 'string') return false;
       const phoneRegex = /^1[3-9]\d{9}$/;
       return phoneRegex.test(value);
     },
@@ -51,8 +56,9 @@ export const validationRules = {
     minLength: number = 8,
     message: string = `密码至少${minLength}位，包含字母和数字`
   ): ValidationRule => ({
-    test: (value: string) => {
+    test: (value: unknown) => {
       if (!value) return true;
+      if (typeof value !== 'string') return false;
       if (value.length < minLength) return false;
       // 至少包含一个字母和一个数字
       return /[a-zA-Z]/.test(value) && /\d/.test(value);
@@ -65,8 +71,9 @@ export const validationRules = {
     originalPassword: string,
     message: string = '两次输入的密码不一致'
   ): ValidationRule => ({
-    test: (value: string) => {
+    test: (value: unknown) => {
       if (!value) return true;
+      if (typeof value !== 'string') return false;
       return value === originalPassword;
     },
     message,
@@ -77,8 +84,9 @@ export const validationRules = {
     min: number,
     message: string = `至少输入${min}个字符`
   ): ValidationRule => ({
-    test: (value: string) => {
+    test: (value: unknown) => {
       if (!value) return true;
+      if (typeof value !== 'string') return false;
       return value.length >= min;
     },
     message,
@@ -89,8 +97,9 @@ export const validationRules = {
     max: number,
     message: string = `最多输入${max}个字符`
   ): ValidationRule => ({
-    test: (value: string) => {
+    test: (value: unknown) => {
       if (!value) return true;
+      if (typeof value !== 'string') return false;
       return value.length <= max;
     },
     message,
@@ -98,7 +107,7 @@ export const validationRules = {
 
   // 数字验证
   number: (message: string = '请输入有效的数字'): ValidationRule => ({
-    test: (value: string | number) => {
+    test: (value: unknown) => {
       if (value === '' || value === null || value === undefined) return true;
       return !isNaN(Number(value));
     },
@@ -111,7 +120,7 @@ export const validationRules = {
     max: number,
     message: string = `请输入${min}到${max}之间的数字`
   ): ValidationRule => ({
-    test: (value: string | number) => {
+    test: (value: unknown) => {
       if (value === '' || value === null || value === undefined) return true;
       const num = Number(value);
       if (isNaN(num)) return false;
@@ -122,8 +131,9 @@ export const validationRules = {
 
   // 身份证号验证
   idCard: (message: string = '请输入有效的身份证号码'): ValidationRule => ({
-    test: (value: string) => {
+    test: (value: unknown) => {
       if (!value) return true;
+      if (typeof value !== 'string') return false;
       // 18位身份证号码验证
       const idCardRegex = /^[1-9]\d{5}(19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[0-9Xx]$/;
       if (!idCardRegex.test(value)) return false;
@@ -147,8 +157,9 @@ export const validationRules = {
 
   // URL验证
   url: (message: string = '请输入有效的URL地址'): ValidationRule => ({
-    test: (value: string) => {
+    test: (value: unknown) => {
       if (!value) return true;
+      if (typeof value !== 'string') return false;
       try {
         new URL(value);
         return true;
@@ -161,8 +172,9 @@ export const validationRules = {
 
   // 日期验证
   date: (message: string = '请输入有效的日期'): ValidationRule => ({
-    test: (value: string) => {
+    test: (value: unknown) => {
       if (!value) return true;
+      if (typeof value !== 'string') return false;
       const date = new Date(value);
       return !isNaN(date.getTime());
     },
@@ -171,8 +183,9 @@ export const validationRules = {
 
   // 未来日期验证
   futureDate: (message: string = '日期必须是未来时间'): ValidationRule => ({
-    test: (value: string) => {
+    test: (value: unknown) => {
       if (!value) return true;
+      if (typeof value !== 'string') return false;
       const date = new Date(value);
       const now = new Date();
       return date.getTime() > now.getTime();
@@ -182,8 +195,9 @@ export const validationRules = {
 
   // 过去日期验证
   pastDate: (message: string = '日期必须是过去时间'): ValidationRule => ({
-    test: (value: string) => {
+    test: (value: unknown) => {
       if (!value) return true;
+      if (typeof value !== 'string') return false;
       const date = new Date(value);
       const now = new Date();
       return date.getTime() < now.getTime();
@@ -197,8 +211,9 @@ export const validationRules = {
     max: number,
     message: string = `年龄必须在${min}到${max}岁之间`
   ): ValidationRule => ({
-    test: (value: string) => {
+    test: (value: unknown) => {
       if (!value) return true;
+      if (typeof value !== 'string') return false;
       const birthDate = new Date(value);
       const today = new Date();
       let age = today.getFullYear() - birthDate.getFullYear();
@@ -218,8 +233,9 @@ export const validationRules = {
     regex: RegExp,
     message: string = '格式不正确'
   ): ValidationRule => ({
-    test: (value: string) => {
+    test: (value: unknown) => {
       if (!value) return true;
+      if (typeof value !== 'string') return false;
       return regex.test(value);
     },
     message,
@@ -231,7 +247,7 @@ export const validationRules = {
     max?: number,
     message?: string
   ): ValidationRule => ({
-    test: (value: any[]) => {
+    test: (value: unknown) => {
       if (!value) return true;
       if (!Array.isArray(value)) return false;
       
@@ -254,7 +270,7 @@ export class FormValidator {
   }
 
   // 验证单个字段
-  validateField(field: string, value: any): string | null {
+  validateField(field: string, value: unknown): string | null {
     const fieldRules = this.rules[field];
     if (!fieldRules) return null;
 
@@ -270,7 +286,7 @@ export class FormValidator {
   }
 
   // 验证整个表单
-  validateForm(formData: { [field: string]: any }): ValidationResult {
+  validateForm(formData: { [field: string]: unknown }): ValidationResult {
     const errors: { [field: string]: string } = {};
     let isValid = true;
 
@@ -339,18 +355,18 @@ export class FormValidator {
 
 // 异步验证器（用于服务器端验证）
 export class AsyncValidator {
-  private validators: { [field: string]: (value: any) => Promise<string | null> } = {};
+  private validators: { [field: string]: (value: unknown) => Promise<string | null> } = {};
 
   // 添加异步验证器
   addAsyncValidator(
     field: string, 
-    validator: (value: any) => Promise<string | null>
+    validator: (value: unknown) => Promise<string | null>
   ): void {
     this.validators[field] = validator;
   }
 
   // 执行异步验证
-  async validateField(field: string, value: any): Promise<string | null> {
+  async validateField(field: string, value: unknown): Promise<string | null> {
     const validator = this.validators[field];
     if (!validator) return null;
 
@@ -363,7 +379,7 @@ export class AsyncValidator {
   }
 
   // 执行所有异步验证
-  async validateAllFields(formData: { [field: string]: any }): Promise<{ [field: string]: string }> {
+  async validateAllFields(formData: { [field: string]: unknown }): Promise<{ [field: string]: string }> {
     const errors: { [field: string]: string } = {};
     
     const validationPromises = Object.keys(this.validators).map(async (field) => {
@@ -502,7 +518,7 @@ export const useFormValidation = (rules: FormValidationRules) => {
 
 // 实时验证Hook
 export const useRealtimeValidation = (
-  initialData: { [field: string]: any },
+  initialData: { [field: string]: unknown },
   rules: FormValidationRules
 ) => {
   const [formData, setFormData] = React.useState(initialData);
@@ -511,7 +527,7 @@ export const useRealtimeValidation = (
   
   const validator = new FormValidator(rules);
 
-  const updateField = (field: string, value: any) => {
+  const updateField = (field: string, value: unknown) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
     // 只有字段被触摸过才显示错误
@@ -567,6 +583,3 @@ export const useRealtimeValidation = (
     isValid: !validator.hasErrors(),
   };
 };
-
-// 导入React用于hooks
-import React from 'react';

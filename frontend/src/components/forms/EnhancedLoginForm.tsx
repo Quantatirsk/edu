@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Eye, EyeOff, Lock } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuthActions } from '../../stores/authStore';
 import { useFormValidation } from '../../hooks/useFormValidation';
 import { commonValidationRules } from '../../utils/validation';
 import { 
@@ -29,7 +29,7 @@ export const EnhancedLoginForm: React.FC<EnhancedLoginFormProps> = ({
   redirectTo = '/',
   className = '',
 }) => {
-  const { login } = useAuth();
+  const { setAuth } = useAuthActions();
   const [showPassword, setShowPassword] = React.useState(false);
 
   // 使用增强的表单验证系统
@@ -59,9 +59,36 @@ export const EnhancedLoginForm: React.FC<EnhancedLoginFormProps> = ({
 
   const onSubmit = async (formData: LoginFormData) => {
     try {
-      await login({
+      // 调用AuthService进行登录
+      const { AuthService } = await import('../../services/authService');
+      
+      const tokens = await AuthService.login({
         email: formData.email,
         password: formData.password,
+      });
+
+      // 获取用户信息
+      const userProfile = await AuthService.getCurrentUser();
+
+      // 转换用户数据格式
+      const user = {
+        id: userProfile.email,
+        name: userProfile.name,
+        email: userProfile.email,
+        phone: userProfile.phone,
+        role: userProfile.role as 'student' | 'teacher' | 'admin',
+        avatar: userProfile.avatar,
+        verified: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      
+      // 使用 authStore 设置认证状态
+      setAuth({
+        user,
+        token: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        expiresIn: tokens.expires_in,
         rememberMe: formData.rememberMe,
       });
       
@@ -69,24 +96,27 @@ export const EnhancedLoginForm: React.FC<EnhancedLoginFormProps> = ({
       if (redirectTo) {
         window.location.href = redirectTo;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // 处理不同类型的错误
-      if (error.response?.status === 401) {
+      const apiError = error as { response?: { status?: number } };
+      if (apiError.response?.status === 401) {
         setErrors({ 
           email: '邮箱或密码错误，请重新输入',
           password: '邮箱或密码错误，请重新输入'
         });
-      } else if (error.response?.status === 423) {
+      } else if (apiError.response?.status === 423) {
         setErrors({ email: '账户已被锁定，请联系客服' });
-      } else if (error.response?.status === 429) {
+      } else if (apiError.response?.status === 429) {
         setErrors({ email: '登录尝试过于频繁，请稍后再试' });
-      } else if (error.response?.data?.errors) {
+      } else if ((apiError as { response?: { data?: { errors?: Record<string, string> } } }).response?.data?.errors) {
         // 服务器返回的字段级错误
-        setErrors(error.response.data.errors);
-      } else if (error.response?.data?.message) {
+        const errorResponse = apiError as { response: { data: { errors: Record<string, string> } } };
+        setErrors(errorResponse.response.data.errors);
+      } else if ((apiError as { response?: { data?: { message?: string } } }).response?.data?.message) {
         // 服务器返回的通用错误消息
-        setErrors({ email: error.response.data.message });
-      } else if (error.name === 'NetworkError' || !error.response) {
+        const messageResponse = apiError as { response: { data: { message: string } } };
+        setErrors({ email: messageResponse.response.data.message });
+      } else if ((error as Error).name === 'NetworkError' || !(apiError as { response?: unknown }).response) {
         setErrors({ email: '网络连接失败，请检查网络设置' });
       } else {
         // 其他未知错误

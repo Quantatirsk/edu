@@ -9,6 +9,8 @@ from sqlalchemy.orm import Session
 from app.db.database import get_database
 from app.db.crud import user, score_record, review
 from app.models.schemas import StudentAnalytics, TeacherAnalytics, SubjectImprovement
+from app.models.database import User
+from app.api.auth import get_current_active_user
 
 router = APIRouter()
 
@@ -16,18 +18,39 @@ router = APIRouter()
 @router.get("/student/{student_id}", response_model=StudentAnalytics)
 async def get_student_analytics(
     student_id: str,
-    db: Session = Depends(get_database)
+    db: Session = Depends(get_database),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     获取学生进步统计
     
     - **student_id**: 学生ID
+    
+    权限控制：
+    - 学生只能查看自己的数据
+    - 教师可以查看自己学生的数据
+    - 管理员可以查看所有数据
     """
     try:
         # 验证学生存在
         student = user.get(db=db, id=student_id)
-        if not student or student.role != "student":
-            raise HTTPException(status_code=404, detail="学生不存在")
+        if not student:
+            raise HTTPException(status_code=404, detail="用户不存在")
+        if student.role != "student":
+            raise HTTPException(status_code=404, detail="用户不是学生角色")
+        
+        # 权限检查
+        if current_user.role == "student":
+            # 学生只能查看自己的数据
+            if current_user.id != student_id:
+                raise HTTPException(status_code=403, detail="无权限访问其他学生的数据")
+        elif current_user.role == "teacher":
+            # 教师只能查看自己学生的数据
+            # TODO: 添加师生关系检查，这里暂时允许所有教师查看
+            pass
+        elif current_user.role != "admin":
+            # 非管理员角色无权限
+            raise HTTPException(status_code=403, detail="无权限访问此数据")
         
         # 获取学生的所有成绩记录
         score_records = score_record.get_by_student(db=db, student_id=student_id, limit=1000)
@@ -103,18 +126,36 @@ async def get_student_analytics(
 @router.get("/teacher/{teacher_id}", response_model=TeacherAnalytics)
 async def get_teacher_analytics(
     teacher_id: str,
-    db: Session = Depends(get_database)
+    db: Session = Depends(get_database),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     获取教师教学统计
     
     - **teacher_id**: 教师ID
+    
+    权限控制：
+    - 教师只能查看自己的数据
+    - 管理员可以查看所有数据
+    - 学生无权限访问教师数据
     """
     try:
         # 验证教师存在
         teacher = user.get(db=db, id=teacher_id)
         if not teacher or teacher.role != "teacher":
             raise HTTPException(status_code=404, detail="教师不存在")
+        
+        # 权限检查
+        if current_user.role == "teacher":
+            # 教师只能查看自己的数据
+            if current_user.id != teacher_id:
+                raise HTTPException(status_code=403, detail="无权限访问其他教师的数据")
+        elif current_user.role == "student":
+            # 学生无权限访问教师分析数据
+            raise HTTPException(status_code=403, detail="学生无权限访问教师分析数据")
+        elif current_user.role != "admin":
+            # 非管理员角色无权限
+            raise HTTPException(status_code=403, detail="无权限访问此数据")
         
         # 获取教师的所有成绩记录
         score_records = score_record.get_by_teacher(db=db, teacher_id=teacher_id, limit=1000)
@@ -203,6 +244,68 @@ async def get_subject_analytics(
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取科目分析失败: {str(e)}")
+
+
+@router.get("/my-analytics")
+async def get_my_analytics(
+    db: Session = Depends(get_database),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    获取当前用户的分析数据
+    
+    自动根据用户角色返回相应的分析数据：
+    - 学生：返回学生分析数据
+    - 教师：返回教师分析数据
+    """
+    try:
+        if current_user.role == "student":
+            # 调用学生分析逻辑
+            return await get_student_analytics(current_user.id, db, current_user)
+        elif current_user.role == "teacher":
+            # 调用教师分析逻辑
+            return await get_teacher_analytics(current_user.id, db, current_user)
+        else:
+            raise HTTPException(status_code=400, detail="当前角色不支持分析功能")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取分析数据失败: {str(e)}")
+
+
+@router.get("/users/students")
+async def get_students(
+    db: Session = Depends(get_database),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    获取所有学生用户列表
+    
+    权限控制：仅管理员可访问
+    """
+    try:
+        # 权限检查：仅管理员可访问
+        if current_user.role != "admin":
+            raise HTTPException(status_code=403, detail="仅管理员可访问学生列表")
+            
+        students = user.get_multi(db=db, limit=1000)
+        student_list = [
+            {
+                "id": u.id,
+                "name": u.name,
+                "email": u.email,
+                "role": u.role
+            }
+            for u in students if u.role == "student"
+        ]
+        
+        return {"students": student_list}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取学生列表失败: {str(e)}")
 
 
 @router.get("/overview")

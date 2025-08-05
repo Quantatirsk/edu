@@ -28,6 +28,7 @@ export interface AuthTokens {
 }
 
 export interface UserProfile {
+  id: string;
   name: string;
   email: string;
   phone: string;
@@ -35,7 +36,7 @@ export interface UserProfile {
   avatar?: string;
 }
 
-export interface APIResponse<T = any> {
+export interface APIResponse<T = unknown> {
   success: boolean;
   message: string;
   data?: T;
@@ -51,68 +52,44 @@ export interface PasswordChange {
   new_password: string;
 }
 
-// Token存储管理
-class TokenManager {
-  private static ACCESS_TOKEN_KEY = 'youjiaotong_access_token';
-  private static REFRESH_TOKEN_KEY = 'youjiaotong_refresh_token';
-  private static TOKEN_EXPIRY_KEY = 'youjiaotong_token_expiry';
+// 认证状态管理 - 使用统一的AuthStore
+import { useAuthStore } from '../stores/authStore';
 
-  static setTokens(tokens: AuthTokens): void {
-    try {
-      localStorage.setItem(this.ACCESS_TOKEN_KEY, tokens.access_token);
-      localStorage.setItem(this.REFRESH_TOKEN_KEY, tokens.refresh_token);
-      
-      // 计算过期时间
-      const expiryTime = Date.now() + (tokens.expires_in * 1000);
-      localStorage.setItem(this.TOKEN_EXPIRY_KEY, expiryTime.toString());
-    } catch (error) {
-      console.error('Error storing tokens:', error);
-    }
+class AuthStateManager {
+  static getAuthStore() {
+    return useAuthStore.getState();
   }
 
   static getAccessToken(): string | null {
-    try {
-      return localStorage.getItem(this.ACCESS_TOKEN_KEY);
-    } catch (error) {
-      console.error('Error getting access token:', error);
+    const { token, sessionExpiry } = this.getAuthStore();
+    
+    // 检查token是否过期
+    if (token && sessionExpiry && Date.now() > sessionExpiry) {
+      this.getAuthStore().clearAuth();
       return null;
     }
+    
+    return token;
   }
 
   static getRefreshToken(): string | null {
-    try {
-      return localStorage.getItem(this.REFRESH_TOKEN_KEY);
-    } catch (error) {
-      console.error('Error getting refresh token:', error);
-      return null;
-    }
+    const { refreshToken } = this.getAuthStore();
+    return refreshToken;
   }
 
   static isTokenExpired(): boolean {
-    try {
-      const expiryTime = localStorage.getItem(this.TOKEN_EXPIRY_KEY);
-      if (!expiryTime) return true;
-      
-      return Date.now() > parseInt(expiryTime, 10);
-    } catch (error) {
-      console.error('Error checking token expiry:', error);
-      return true;
-    }
-  }
-
-  static clearTokens(): void {
-    try {
-      localStorage.removeItem(this.ACCESS_TOKEN_KEY);
-      localStorage.removeItem(this.REFRESH_TOKEN_KEY);
-      localStorage.removeItem(this.TOKEN_EXPIRY_KEY);
-    } catch (error) {
-      console.error('Error clearing tokens:', error);
-    }
+    const { sessionExpiry } = this.getAuthStore();
+    if (!sessionExpiry) return true;
+    return Date.now() > sessionExpiry;
   }
 
   static hasValidToken(): boolean {
-    const accessToken = this.getAccessToken();
-    return accessToken !== null && !this.isTokenExpired();
+    const token = this.getAccessToken();
+    return token !== null && !this.isTokenExpired();
+  }
+
+  static clearAuth(): void {
+    this.getAuthStore().clearAuth();
   }
 }
 
@@ -128,9 +105,25 @@ const authClient = axios.create({
 // 请求拦截器 - 添加认证头
 authClient.interceptors.request.use(
   (config) => {
-    const token = TokenManager.getAccessToken();
-    if (token && !TokenManager.isTokenExpired()) {
+    const token = AuthStateManager.getAccessToken();
+    console.log('🔐 AuthClient: Checking for token...', {
+      hasToken: !!token,
+      tokenPrefix: token ? token.substring(0, 20) + '...' : 'null',
+      url: config.url
+    });
+    
+    if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('✅ AuthClient: Token attached to request');
+    } else {
+      console.warn('⚠️ AuthClient: No token available for request');
+      // 检查AuthStore状态
+      const authState = AuthStateManager.getAuthStore();
+      console.log('📊 AuthStore state:', {
+        hasUser: !!authState.user,
+        hasToken: !!authState.token,
+        isAuthenticated: authState.isAuthenticated
+      });
     }
     return config;
   },
@@ -150,18 +143,26 @@ authClient.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshToken = TokenManager.getRefreshToken();
+        const refreshToken = AuthStateManager.getRefreshToken();
         if (refreshToken) {
           const newTokens = await AuthService.refreshAccessToken(refreshToken);
-          TokenManager.setTokens(newTokens);
+          
+          // 更新AuthStore中的tokens
+          const authStore = AuthStateManager.getAuthStore();
+          authStore.setAuth({
+            user: authStore.user!,
+            token: newTokens.access_token,
+            refreshToken: newTokens.refresh_token,
+            expiresIn: newTokens.expires_in,
+          });
           
           // 重新发送原始请求
           originalRequest.headers.Authorization = `Bearer ${newTokens.access_token}`;
           return authClient(originalRequest);
         }
       } catch (refreshError) {
-        // 刷新失败，清除tokens并跳转到登录页
-        TokenManager.clearTokens();
+        // 刷新失败，清除认证状态并跳转到登录页
+        AuthStateManager.clearAuth();
         window.location.href = '/login';
         return Promise.reject(refreshError);
       }
@@ -178,9 +179,10 @@ export class AuthService {
    */
   static async register(userData: UserRegister): Promise<APIResponse> {
     try {
-      const response: AxiosResponse<APIResponse> = await authClient.post('/api/auth/register', userData);
+      console.log('AuthService: Attempting register with URL:', `${APIConfig.baseURL}/auth/register`);
+      const response: AxiosResponse<APIResponse> = await authClient.post('/auth/register', userData);
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw this.handleError(error);
     }
   }
@@ -190,14 +192,34 @@ export class AuthService {
    */
   static async login(credentials: UserLogin): Promise<AuthTokens> {
     try {
-      const response: AxiosResponse<AuthTokens> = await authClient.post('/api/auth/login', credentials);
+      console.log('🔑 AuthService: Attempting login with URL:', `${APIConfig.baseURL}/auth/login`);
+      console.log('📤 Request payload:', { email: credentials.email, passwordLength: credentials.password.length });
+      
+      const response: AxiosResponse<AuthTokens> = await authClient.post('/auth/login', credentials);
+      console.log('📥 Raw response status:', response.status);
+      console.log('📥 Raw response data:', response.data);
+      
       const tokens = response.data;
       
-      // 存储tokens
-      TokenManager.setTokens(tokens);
+      // 验证token结构
+      if (!tokens.access_token || !tokens.token_type) {
+        console.error('❌ Invalid token response format:', tokens);
+        throw new Error('Invalid token response format');
+      }
       
+      console.log('✅ Login tokens validated successfully');
       return tokens;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      console.error('❌ AuthService login error:', error);
+      if (error.response) {
+        console.error('❌ Response status:', error.response.status);
+        console.error('❌ Response data:', error.response.data);
+        console.error('❌ Response headers:', error.response.headers);
+      } else if (error.request) {
+        console.error('❌ Request made but no response:', error.request);
+      } else {
+        console.error('❌ Request setup error:', error.message);
+      }
       throw this.handleError(error);
     }
   }
@@ -207,11 +229,11 @@ export class AuthService {
    */
   static async refreshAccessToken(refreshToken: string): Promise<AuthTokens> {
     try {
-      const response: AxiosResponse<AuthTokens> = await authClient.post('/api/auth/refresh', {
+      const response: AxiosResponse<AuthTokens> = await authClient.post('/auth/refresh', {
         refresh_token: refreshToken
       });
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw this.handleError(error);
     }
   }
@@ -221,9 +243,27 @@ export class AuthService {
    */
   static async getCurrentUser(): Promise<UserProfile> {
     try {
-      const response: AxiosResponse<UserProfile> = await authClient.get('/api/auth/me');
-      return response.data;
-    } catch (error: any) {
+      console.log('👤 AuthService: Fetching current user from:', `${APIConfig.baseURL}/auth/me`);
+      const response: AxiosResponse<UserProfile> = await authClient.get('/auth/me');
+      console.log('📥 User profile response status:', response.status);
+      console.log('📥 User profile data:', response.data);
+      
+      const userProfile = response.data;
+      
+      // 验证用户信息结构
+      if (!userProfile.id || !userProfile.email || !userProfile.name) {
+        console.error('❌ Invalid user profile format:', userProfile);
+        throw new Error('Invalid user profile response format');
+      }
+      
+      console.log('✅ User profile validated successfully');
+      return userProfile;
+    } catch (error: unknown) {
+      console.error('❌ AuthService getCurrentUser error:', error);
+      if (error.response) {
+        console.error('❌ Response status:', error.response.status);
+        console.error('❌ Response data:', error.response.data);
+      }
       throw this.handleError(error);
     }
   }
@@ -233,15 +273,15 @@ export class AuthService {
    */
   static async logout(): Promise<APIResponse> {
     try {
-      const response: AxiosResponse<APIResponse> = await authClient.post('/api/auth/logout');
+      const response: AxiosResponse<APIResponse> = await authClient.post('/auth/logout');
       
-      // 清除本地tokens
-      TokenManager.clearTokens();
+      // 清除认证状态
+      AuthStateManager.clearAuth();
       
       return response.data;
-    } catch (error: any) {
-      // 即使API调用失败，也要清除本地tokens
-      TokenManager.clearTokens();
+    } catch (error: unknown) {
+      // 即使API调用失败，也要清除认证状态
+      AuthStateManager.clearAuth();
       throw this.handleError(error);
     }
   }
@@ -251,11 +291,11 @@ export class AuthService {
    */
   static async requestPasswordReset(email: string): Promise<APIResponse> {
     try {
-      const response: AxiosResponse<APIResponse> = await authClient.post('/api/auth/request-password-reset', {
+      const response: AxiosResponse<APIResponse> = await authClient.post('/auth/request-password-reset', {
         email
       });
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw this.handleError(error);
     }
   }
@@ -265,9 +305,9 @@ export class AuthService {
    */
   static async resetPassword(resetData: PasswordReset): Promise<APIResponse> {
     try {
-      const response: AxiosResponse<APIResponse> = await authClient.post('/api/auth/reset-password', resetData);
+      const response: AxiosResponse<APIResponse> = await authClient.post('/auth/reset-password', resetData);
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw this.handleError(error);
     }
   }
@@ -277,9 +317,9 @@ export class AuthService {
    */
   static async changePassword(passwordData: PasswordChange): Promise<APIResponse> {
     try {
-      const response: AxiosResponse<APIResponse> = await authClient.put('/api/auth/change-password', passwordData);
+      const response: AxiosResponse<APIResponse> = await authClient.put('/auth/change-password', passwordData);
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw this.handleError(error);
     }
   }
@@ -288,27 +328,27 @@ export class AuthService {
    * 检查认证状态
    */
   static isAuthenticated(): boolean {
-    return TokenManager.hasValidToken();
+    return AuthStateManager.hasValidToken();
   }
 
   /**
    * 获取访问令牌
    */
   static getAccessToken(): string | null {
-    return TokenManager.getAccessToken();
+    return AuthStateManager.getAccessToken();
   }
 
   /**
    * 清除认证信息
    */
   static clearAuth(): void {
-    TokenManager.clearTokens();
+    AuthStateManager.clearAuth();
   }
 
   /**
    * 错误处理
    */
-  private static handleError(error: any): Error {
+  private static handleError(error: unknown): Error {
     if (error.response) {
       // 服务器响应错误
       const message = error.response.data?.detail || error.response.data?.message || '服务器错误';
@@ -323,8 +363,8 @@ export class AuthService {
   }
 }
 
-// 导出token管理器以供其他模块使用
-export { TokenManager };
+// 导出认证状态管理器以供其他模块使用
+export { AuthStateManager };
 
 // 默认导出
 export default AuthService;

@@ -3,7 +3,7 @@
 """
 
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 
 from app.db.database import get_database
@@ -15,32 +15,53 @@ router = APIRouter()
 
 @router.get("/", response_model=TeacherList)
 async def get_teachers(
-    skip: int = Query(0, ge=0, description="跳过的记录数"),
-    limit: int = Query(20, ge=1, le=100, description="返回的记录数"),
-    subject: Optional[str] = Query(None, description="科目筛选"),
-    search: Optional[str] = Query(None, description="搜索关键词"),
-    order_by: str = Query("rating", description="排序字段", regex="^(rating|price|experience)$"),
-    order_desc: bool = Query(True, description="是否降序排列"),
+    request: Request,
+    # 基础分页参数
+    page: int = Query(1, ge=1, description="页码"),
+    limit: int = Query(20, ge=1, le=100, description="每页记录数"),
+    
+    # 搜索参数
+    query: Optional[str] = Query(None, description="搜索关键词"),
+    
+    # 排序参数
+    sortBy: str = Query("rating", description="排序字段"),
+    sortOrder: str = Query("desc", description="排序顺序"),
+    
     db: Session = Depends(get_database)
 ):
     """
     获取教师列表
     
-    - **skip**: 跳过的记录数
-    - **limit**: 返回的记录数
-    - **subject**: 科目筛选
-    - **search**: 搜索关键词
-    - **order_by**: 排序字段 (rating|price|experience)
-    - **order_desc**: 是否降序排列
+    - **page**: 页码
+    - **limit**: 每页记录数
+    - **query**: 搜索关键词
+    - **sortBy**: 排序字段
+    - **sortOrder**: 排序顺序
     """
     try:
+        # 计算跳过的记录数
+        skip = (page - 1) * limit
+        
+        # 从查询参数中提取筛选条件
+        subject = None
+        
+        # 检查各种可能的subject参数格式
+        if 'filters[subject]' in request.query_params:
+            subject_val = request.query_params.get('filters[subject]')
+            if subject_val:
+                subject = subject_val
+        
+        # 转换排序参数
+        order_by = sortBy if sortBy in ['rating', 'price', 'experience'] else 'rating'
+        order_desc = sortOrder.lower() == 'desc'
+        
         # 获取教师列表
         teachers_db = user.get_teachers(
             db=db,
             skip=skip,
             limit=limit,
             subject=subject,
-            search=search,
+            search=query,
             order_by=order_by,
             order_desc=order_desc
         )
@@ -72,8 +93,8 @@ async def get_teachers(
             teachers.append(Teacher(**teacher_dict))
         
         # 获取总数（用于分页）
-        filters = {"role": "teacher"}
-        total = user.count(db=db, filters=filters)
+        count_filters = {"role": "teacher"}
+        total = user.count(db=db, filters=count_filters)
         
         return TeacherList(
             teachers=teachers,
@@ -84,6 +105,41 @@ async def get_teachers(
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取教师列表失败: {str(e)}")
+
+
+@router.get("/subjects")
+async def get_subjects(db: Session = Depends(get_database)):
+    """
+    获取所有教师科目列表
+    
+    返回格式: [{"subject": "数学", "count": 10}, ...]
+    """
+    try:
+        # 获取所有教师的科目统计
+        teachers_db = user.get_teachers(db=db, limit=1000)  # 获取所有教师
+        
+        # 统计科目分布
+        subject_count = {}
+        for teacher in teachers_db:
+            if teacher.subject:  # 确保科目字段存在
+                subjects = teacher.subject if isinstance(teacher.subject, list) else [teacher.subject]
+                for subject in subjects:
+                    if subject:  # 确保科目不为空
+                        subject_count[subject] = subject_count.get(subject, 0) + 1
+        
+        # 转换为列表格式
+        subjects = [
+            {"subject": subject, "count": count}
+            for subject, count in subject_count.items()
+        ]
+        
+        # 按数量降序排序
+        subjects.sort(key=lambda x: x["count"], reverse=True)
+        
+        return subjects
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取科目列表失败: {str(e)}")
 
 
 @router.get("/{teacher_id}", response_model=Teacher)
@@ -233,7 +289,7 @@ async def create_teacher_review(
             db=db, 
             teacher_id=teacher_id, 
             new_rating=rating_stats["overall"], 
-            review_count=rating_stats["count"]
+            review_count=int(rating_stats["count"])
         )
         
         # 转换为Pydantic模型
@@ -363,3 +419,5 @@ async def get_teacher_review(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取评价详情失败: {str(e)}")
+
+

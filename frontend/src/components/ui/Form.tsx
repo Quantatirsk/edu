@@ -603,7 +603,7 @@ export const FormErrorSummary: React.FC<FormErrorSummaryProps> = ({
   errors, 
   className 
 }) => {
-  const errorList = Object.entries(errors).filter(([_, message]) => message);
+  const errorList = Object.entries(errors).filter(([, message]) => message);
   
   if (errorList.length === 0) return null;
 

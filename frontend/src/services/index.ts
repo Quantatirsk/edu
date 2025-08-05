@@ -86,7 +86,7 @@ export const checkServiceHealth = async () => {
 };
 
 // Error handling utilities for services
-export const handleServiceError = (error: any, context: string) => {
+export const handleServiceError = (error: unknown, context: string) => {
   console.error(`Service error in ${context}:`, error);
   
   // You can add global error handling logic here
@@ -123,7 +123,7 @@ export const serviceCacheKeys = {
 // Development utilities
 if (import.meta.env.DEV) {
   // Expose services to window for debugging
-  (window as any).services = {
+  (window as Window & { services?: Record<string, unknown> }).services = {
     teacher: TeacherService,
     appointment: AppointmentService,
     user: UserService,

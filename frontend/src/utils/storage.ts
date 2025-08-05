@@ -160,7 +160,7 @@ export class StorageManager {
             cleaned++;
           }
         }
-      } catch (error) {
+      } catch {
         // 如果解析失败，也清理掉
         this.remove(key);
         cleaned++;
@@ -172,7 +172,7 @@ export class StorageManager {
 
   // 导出数据
   export(): string {
-    const data: Record<string, any> = {};
+    const data: Record<string, unknown> = {};
     const keys = this.keys();
     
     for (const key of keys) {
@@ -288,7 +288,7 @@ export class CacheManager {
     
     let usage = 0;
     for (const key of cacheKeys) {
-      const storageManager = this.storage as any;
+      const storageManager = this.storage as unknown as { storage?: Storage };
       const value = storageManager.storage?.getItem(key);
       if (value) {
         usage += key.length + value.length;
@@ -318,7 +318,7 @@ export class OfflineManager {
     id: string;
     type: 'create' | 'update' | 'delete';
     endpoint: string;
-    data?: any;
+    data?: unknown;
     timestamp: number;
   }): boolean {
     const queue = this.getSyncQueue();
@@ -331,7 +331,7 @@ export class OfflineManager {
     id: string;
     type: 'create' | 'update' | 'delete';
     endpoint: string;
-    data?: any;
+    data?: unknown;
     timestamp: number;
   }> {
     return this.storage.get(this.syncQueue) || [];
@@ -360,14 +360,15 @@ export class OfflineManager {
   }
 
   // 获取离线数据
-  getOfflineData(): Record<string, { data: any; timestamp: number }> {
+  getOfflineData(): Record<string, { data: unknown; timestamp: number }> {
     return this.storage.get(this.offlineData) || {};
   }
 
   // 获取特定离线数据
   getOfflineItem<T>(key: string): T | null {
     const offlineData = this.getOfflineData();
-    return offlineData[key]?.data || null;
+    const item = offlineData[key]?.data;
+    return (item as T) || null;
   }
 
   // 移除离线数据
@@ -435,7 +436,7 @@ export const addStorageListener = (callback: (event: StorageEvent) => void) => {
 
 // 开发工具
 if (import.meta.env.DEV) {
-  (window as any).storage = {
+  (window as Window & { storage?: Record<string, unknown> }).storage = {
     manager: storage,
     session: sessionStorage,
     cache,

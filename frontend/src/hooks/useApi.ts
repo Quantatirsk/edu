@@ -298,9 +298,9 @@ export const useSearch = (
 export const useStudentAnalytics = (
   studentId: string,
   options?: QueryOptions<{
-    progress: any[];
-    subjects: any[];
-    performance: any;
+    progress: { date: string; score: number; subject: string }[];
+    subjects: { name: string; score: number; improvement: number }[];
+    performance: { overall: number; trend: 'up' | 'down' | 'stable' };
     recommendations: string[];
   }>
 ) => {
@@ -317,9 +317,9 @@ export const useTeacherAnalytics = (
   teacherId: string,
   options?: QueryOptions<{
     students: number;
-    ratings: any[];
-    earnings: any[];
-    subjects: any[];
+    ratings: { date: string; rating: number; studentName: string }[];
+    earnings: { month: string; amount: number }[];
+    subjects: { name: string; studentCount: number; avgRating: number }[];
   }>
 ) => {
   return useQuery({

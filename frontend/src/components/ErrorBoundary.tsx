@@ -58,12 +58,13 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   }
 
   // 发送错误报告到监控服务
-  private reportErrorToService = (_error: Error, _errorInfo: ErrorInfo) => {
+  private reportErrorToService = (error: Error, errorInfo: ErrorInfo) => {
     // 这里可以集成错误监控服务，如 Sentry、Bugsnag 等
     if (import.meta.env.PROD) {
       try {
         // 示例: 发送到错误监控服务
         // errorMonitoringService.captureException(error, { extra: errorInfo });
+        console.log('Error reported:', error.message, errorInfo.componentStack);
       } catch (reportingError) {
         console.error('Failed to report error:', reportingError);
       }
@@ -204,43 +205,3 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 
 export default ErrorBoundary;
 
-// 函数式组件版本的错误边界 Hook (React 18+)
-export const useErrorBoundary = () => {
-  const [error, setError] = React.useState<Error | null>(null);
-
-  const resetError = React.useCallback(() => {
-    setError(null);
-  }, []);
-
-  const captureError = React.useCallback((error: Error) => {
-    setError(error);
-  }, []);
-
-  React.useEffect(() => {
-    if (error) {
-      throw error;
-    }
-  }, [error]);
-
-  return {
-    error,
-    resetError,
-    captureError,
-  };
-};
-
-// 高阶组件版本
-export const withErrorBoundary = <P extends object>(
-  Component: React.ComponentType<P>,
-  errorBoundaryProps?: Omit<ErrorBoundaryProps, 'children'>
-) => {
-  const WrappedComponent = (props: P) => (
-    <ErrorBoundary {...errorBoundaryProps}>
-      <Component {...props} />
-    </ErrorBoundary>
-  );
-
-  WrappedComponent.displayName = `withErrorBoundary(${Component.displayName || Component.name})`;
-
-  return WrappedComponent;
-};
