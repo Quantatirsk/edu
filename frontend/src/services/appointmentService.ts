@@ -118,16 +118,16 @@ export class AppointmentService {
   static async getTeacherAppointments(
     teacherId: string,
     params: Omit<AppointmentSearchParams, 'teacherId'> = {}
-  ): Promise<PaginatedAppointments> {
-    return apiRequest.get<PaginatedAppointments>(`/teachers/${teacherId}/appointments`, { params });
+  ): Promise<{ appointments: Appointment[]; total: number; skip: number; limit: number }> {
+    return apiRequest.get<{ appointments: Appointment[]; total: number; skip: number; limit: number }>(`/appointments/teachers/${teacherId}/appointments`, { params });
   }
 
   // 获取学生的预约列表
   static async getStudentAppointments(
     studentId: string,
     params: Omit<AppointmentSearchParams, 'studentId'> = {}
-  ): Promise<PaginatedAppointments> {
-    return apiRequest.get<PaginatedAppointments>(`/students/${studentId}/appointments`, { params });
+  ): Promise<{ appointments: Appointment[]; total: number; skip: number; limit: number }> {
+    return apiRequest.get<{ appointments: Appointment[]; total: number; skip: number; limit: number }>(`/appointments/students/${studentId}/appointments`, { params });
   }
 
   // 更新预约
@@ -137,24 +137,30 @@ export class AppointmentService {
 
   // 确认预约（教师操作）
   static async confirmAppointment(id: string, notes?: string): Promise<Appointment> {
-    return apiRequest.post<Appointment>(`/appointments/${id}/confirm`, { notes });
+    return apiRequest.put<Appointment>(`/appointments/${id}`, { 
+      status: 'confirmed', 
+      notes 
+    });
   }
 
   // 取消预约
   static async cancelAppointment(
     id: string,
     reason: string,
-    cancelledBy: 'teacher' | 'student'
+    cancelledBy?: 'teacher' | 'student'
   ): Promise<Appointment> {
-    return apiRequest.post<Appointment>(`/appointments/${id}/cancel`, {
-      reason,
-      cancelledBy,
+    return apiRequest.put<Appointment>(`/appointments/${id}`, {
+      status: 'cancelled',
+      notes: reason,
     });
   }
 
   // 完成预约
-  static async completeAppointment(id: string, summary?: string): Promise<Appointment> {
-    return apiRequest.post<Appointment>(`/appointments/${id}/complete`, { summary });
+  static async completeAppointment(id: string, rating?: number, review?: string): Promise<Appointment> {
+    return apiRequest.put<Appointment>(`/appointments/${id}`, { 
+      status: 'completed',
+      notes: review || ''
+    });
   }
 
   // 标记缺席

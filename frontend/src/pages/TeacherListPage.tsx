@@ -18,6 +18,10 @@ import {
 import { useTeachers } from '../hooks/useTeachers';
 import { useGeolocation } from '../hooks/useGeolocation';
 
+// Store hooks
+import { useAuthUser } from '../stores/authStore';
+import { useNotificationActions } from '../stores/uiStore';
+
 // Components
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -26,6 +30,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import AppointmentForm from '../components/AppointmentForm';
 
 import type { Teacher } from '../types';
 
@@ -37,11 +42,15 @@ type SortOption = 'rating-desc' | 'price-asc' | 'experience-desc' | 'distance-as
 
 const TeacherListPageV2: React.FC = () => {
   const navigate = useNavigate();
+  const user = useAuthUser();
+  const { showError, showSuccess } = useNotificationActions();
   
   // Local state
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
   const [sortBy, setSortBy] = useState<SortOption>('rating-desc');
+  const [showAppointmentForm, setShowAppointmentForm] = useState(false);
+  const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   
   // Step 3: Restore geolocation with stable references
   const { location, permission, requestLocation } = useGeolocation();
@@ -114,6 +123,30 @@ const TeacherListPageV2: React.FC = () => {
   // Navigate to teacher detail
   const handleTeacherClick = (teacher: Teacher) => {
     navigate(`/teachers/${teacher.id}`);
+  };
+
+  // Handle appointment booking
+  const handleBookAppointment = (teacher: Teacher) => {
+    if (!user) {
+      showError('请先登录', '预约课程需要先登录账户');
+      navigate('/login');
+      return;
+    }
+
+    if (user.role !== 'student') {
+      showError('权限不足', '只有学生可以预约课程。教师账户无法预约其他教师，请使用学生账户登录体验预约功能。');
+      return;
+    }
+
+    setSelectedTeacher(teacher);
+    setShowAppointmentForm(true);
+  };
+
+  // Handle appointment success
+  const handleAppointmentSuccess = () => {
+    setShowAppointmentForm(false);
+    setSelectedTeacher(null);
+    showSuccess('预约成功', '您的预约已提交，等待教师确认');
   };
 
   return (
@@ -379,7 +412,7 @@ const TeacherListPageV2: React.FC = () => {
                         className="rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white border-0 shadow-lg text-xs"
                         onClick={(e) => {
                           e.stopPropagation();
-                          console.log('预约教师:', teacher.name);
+                          handleBookAppointment(teacher);
                         }}
                       >
                         立即预约
@@ -423,6 +456,19 @@ const TeacherListPageV2: React.FC = () => {
             </div>
           )}
         </div>
+      )}
+
+      {/* Appointment Form Dialog */}
+      {selectedTeacher && (
+        <AppointmentForm
+          teacherId={selectedTeacher.id}
+          isOpen={showAppointmentForm}
+          onClose={() => {
+            setShowAppointmentForm(false);
+            setSelectedTeacher(null);
+          }}
+          onSuccess={handleAppointmentSuccess}
+        />
       )}
     </div>
   );

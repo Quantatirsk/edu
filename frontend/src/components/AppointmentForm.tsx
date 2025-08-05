@@ -73,7 +73,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
   const [currentStep, setCurrentStep] = useState(1);
 
   // 加载可用时间槽
-  const loadAvailableSlots = useCallback(async () => {
+  const loadAvailableSlots = useCallback(async (teacherPrice: number = 200) => {
     try {
       // 模拟生成接下来7天的可用时间槽
       const slots: AvailableSlot[] = [];
@@ -93,7 +93,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
             date: dateStr,
             time: timeStr,
             available,
-            price: teacher?.price || 200
+            price: teacherPrice
           });
         }
       }
@@ -102,7 +102,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
     } catch (error) {
       console.error('加载时间槽失败:', error);
     }
-  }, [teacher?.price]);
+  }, []);
 
   // 加载教师信息
   useEffect(() => {
@@ -120,7 +120,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
         }
         
         // 加载可用时间槽
-        await loadAvailableSlots();
+        await loadAvailableSlots(teacherData.price);
         
       } catch (error) {
         console.error('加载教师信息失败:', error);
@@ -133,7 +133,8 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
     if (isOpen) {
       loadTeacher();
     }
-  }, [teacherId, isOpen, showError, loadAvailableSlots]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [teacherId, isOpen, showError]);
 
   // 获取可用日期
   const getAvailableDates = () => {

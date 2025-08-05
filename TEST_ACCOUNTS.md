@@ -27,7 +27,7 @@
 ### 学生账户
 | 角色 | 姓名 | 邮箱 | 密码 | 年级 | 薄弱科目 |
 |------|------|------|------|------|----------|
-| 学生 | 小明同学 | `student1@youjiaotong.com` | `Student123456` | 高二 | 数学、物理 |
+| 学生 | 小明同学 | student1@youjiaotong.com | Student123456 | 高二 | 数学、物理 |
 | 学生 | 小红同学 | `student2@youjiaotong.com` | `Student123456` | 初三 | 英语、化学 |
 | 学生 | 小刚同学 | `student3@youjiaotong.com` | `Student123456` | 高一 | 数学 |
 | 学生 | 小丽同学 | `student4@youjiaotong.com` | `Student123456` | 初二 | 英语 |

@@ -15,6 +15,9 @@ import AppRouter from './router/AppRouter';
 // Error Boundary Component
 import ErrorBoundary from './components/ErrorBoundary';
 
+// Toast notifications
+import { Toaster } from './components/ui/toaster';
+
 // 应用主组件
 function AppContent() {
   // 认证状态管理
@@ -101,6 +104,7 @@ function AppContent() {
         isAuthenticated={isAuthenticated}
         selectedTeacher={selectedTeacher}
       />
+      <Toaster />
     </ErrorBoundary>
   );
 }

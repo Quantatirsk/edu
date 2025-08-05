@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
   ChevronLeft, 
@@ -47,12 +47,6 @@ const TeacherDetailPage: React.FC<TeacherDetailPageProps> = () => {
   const { teacherId } = useParams<{ teacherId: string }>();
   const user = useAuthUser();
   const { showError, showSuccess } = useNotificationActions();
-  
-  // 使用 ref 缓存通知函数，避免 useCallback 依赖问题
-  const showErrorRef = useRef(showError);
-  const showSuccessRef = useRef(showSuccess);
-  showErrorRef.current = showError;
-  showSuccessRef.current = showSuccess;
 
   // State
   const [teacher, setTeacher] = useState<Teacher | null>(null);
@@ -88,7 +82,7 @@ const TeacherDetailPage: React.FC<TeacherDetailPageProps> = () => {
   }, []);
 
   // 加载教师数据
-  const loadTeacher = useCallback(async () => {
+  const loadTeacher = async () => {
     if (!teacherId) return;
     
     try {
@@ -108,14 +102,14 @@ const TeacherDetailPage: React.FC<TeacherDetailPageProps> = () => {
       
     } catch (error) {
       console.error('加载教师数据失败:', error);
-      showErrorRef.current('加载失败', '无法加载教师信息，请稍后重试');
+      showError('加载失败', '无法加载教师信息，请稍后重试');
     } finally {
       setIsLoading(false);
     }
-  }, [teacherId, user]); // Include user dependency
+  };
 
   // 加载评价数据
-  const loadReviews = useCallback(async () => {
+  const loadReviews = async () => {
     if (!teacherId) return;
     
     try {
@@ -129,11 +123,11 @@ const TeacherDetailPage: React.FC<TeacherDetailPageProps> = () => {
       });
     } catch (error) {
       console.error('加载评价数据失败:', error);
-      showErrorRef.current('加载失败', '无法加载评价数据');
+      showError('加载失败', '无法加载评价数据');
     } finally {
       setIsReviewsLoading(false);
     }
-  }, [teacherId]); // 移除showError依赖
+  };
 
   // 初始化数据
   useEffect(() => {
@@ -142,7 +136,7 @@ const TeacherDetailPage: React.FC<TeacherDetailPageProps> = () => {
     loadTeacher();
     loadReviews();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teacherId]); // 只依赖teacherId，避免无限循环
+  }, [teacherId]);
 
   // 计算距离
   const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => {
@@ -163,21 +157,27 @@ const TeacherDetailPage: React.FC<TeacherDetailPageProps> = () => {
     try {
       if (isFavorited) {
         await TeacherService.unfavoriteTeacher(teacherId);
-        showSuccessRef.current('已取消收藏', '教师已从收藏列表移除');
+        showSuccess('已取消收藏', '教师已从收藏列表移除');
       } else {
         await TeacherService.favoriteTeacher(teacherId);
-        showSuccessRef.current('收藏成功', '教师已添加到收藏列表');
+        showSuccess('收藏成功', '教师已添加到收藏列表');
       }
       setIsFavorited(!isFavorited);
     } catch {
-      showErrorRef.current('操作失败', '收藏操作失败，请稍后重试');
+      showError('操作失败', '收藏操作失败，请稍后重试');
     }
   };
 
   // 处理预约
   const handleBookAppointment = () => {
     if (!user) {
-      showErrorRef.current('请先登录', '需要登录后才能预约教师');
+      showError('请先登录', '需要登录后才能预约教师');
+      navigate('/login');
+      return;
+    }
+
+    if (user.role !== 'student') {
+      showError('权限不足', '只有学生可以预约课程。教师账户无法预约其他教师，请使用学生账户登录体验预约功能。');
       return;
     }
     
@@ -197,7 +197,7 @@ const TeacherDetailPage: React.FC<TeacherDetailPageProps> = () => {
     try {
       setIsSubmittingReview(true);
       await TeacherService.createReview(teacherId, reviewData);
-      showSuccessRef.current('评价成功', '您的评价已提交，感谢您的反馈！');
+      showSuccess('评价成功', '您的评价已提交，感谢您的反馈！');
       setShowReviewForm(false);
       
       // 重新加载评价数据
@@ -206,7 +206,7 @@ const TeacherDetailPage: React.FC<TeacherDetailPageProps> = () => {
       
     } catch (error) {
       console.error('提交评价失败:', error);
-      showErrorRef.current('提交失败', '评价提交失败，请稍后重试');
+      showError('提交失败', '评价提交失败，请稍后重试');
     } finally {
       setIsSubmittingReview(false);
     }

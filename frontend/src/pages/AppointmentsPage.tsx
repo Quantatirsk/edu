@@ -12,7 +12,9 @@ import {
   AlertCircle,
   Search,
   Plus,
-  MoreHorizontal
+  MoreHorizontal,
+  Users,
+  Settings
 } from 'lucide-react';
 
 // Store hooks
@@ -38,13 +40,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import BatchAppointmentManager from '../components/BatchAppointmentManager';
+import EnhancedCalendarSelector from '../components/EnhancedCalendarSelector';
 
 // 状态映射
 const statusConfig = {
@@ -103,6 +107,19 @@ const AppointmentsPage: React.FC = () => {
   
   // Direct store access for loading state
   const setLoading = useAppointmentStore((state) => state.setLoading);
+  
+  // Stable handlers - Remove useCallback to prevent infinite loop
+  // const handleStatusFilterChange = (value: string) => {
+  //   if (value === 'all') {
+  //     setFilters({ status: [] });
+  //   } else {
+  //     setFilters({ status: [value as AppointmentStatus] });
+  //   }
+  // };
+  
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
   const { showError, showSuccess } = useNotificationActions();
   
   // Local state
@@ -112,9 +129,11 @@ const AppointmentsPage: React.FC = () => {
   const [showCompleteDialog, setShowCompleteDialog] = useState<string | null>(null);
   const [rating, setRating] = useState(5);
   const [review, setReview] = useState('');
+  const [showBatchManager, setShowBatchManager] = useState(false);
+  const [showEnhancedCalendar, setShowEnhancedCalendar] = useState(false);
 
-  // 加载预约数据
-  const loadAppointments = useCallback(async () => {
+  // 加载预约数据 - Remove useCallback to prevent dependencies issues
+  const loadAppointments = async () => {
     if (!user) return;
     
     try {
@@ -149,12 +168,12 @@ const AppointmentsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [user, filters, setAppointments, setLoading, showError]);
+  };
 
   // 初始化数据
   useEffect(() => {
     loadAppointments();
-  }, [loadAppointments]);
+  }, [user?.id, filters]); // Direct dependencies instead of function dependency
 
   // 筛选预约
   const filteredAppointments = useMemo(() => {
@@ -268,13 +287,31 @@ const AppointmentsPage: React.FC = () => {
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <h1 className="text-2xl font-bold text-foreground">我的预约</h1>
-              <Button 
-                onClick={() => navigate('/teachers')}
-                className="gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                新建预约
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button 
+                  onClick={() => navigate('/teachers')}
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  新建预约
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => setShowBatchManager(true)}
+                  className="gap-2"
+                >
+                  <Users className="h-4 w-4" />
+                  批量预约
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => setShowEnhancedCalendar(true)}
+                  className="gap-2"
+                >
+                  <Settings className="h-4 w-4" />
+                  高级日历
+                </Button>
+              </div>
             </div>
             
             {/* 搜索和筛选 */}
@@ -285,29 +322,14 @@ const AppointmentsPage: React.FC = () => {
                   type="text"
                   placeholder="搜索预约..."
                   className="pl-10 w-64"
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={handleSearchChange}
                 />
               </div>
               
-              <Select onValueChange={(value) => {
-                if (value === 'all') {
-                  setFilters({ status: [] });
-                } else {
-                  setFilters({ status: [value as AppointmentStatus] });
-                }
-              }}>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="状态" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部状态</SelectItem>
-                  {Object.entries(statusConfig).map(([key, config]) => (
-                    <SelectItem key={key} value={key}>
-                      {config.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {/* Temporarily disable Select to fix infinite loop */}
+              <div className="w-32 px-3 py-2 border rounded-md text-sm">
+                全部状态
+              </div>
             </div>
           </div>
         </div>
@@ -615,6 +637,52 @@ const AppointmentsPage: React.FC = () => {
           <AlertDescription>{createError}</AlertDescription>
         </Alert>
       )}
+
+      {/* 批量预约管理对话框 */}
+      <BatchAppointmentManager
+        isOpen={showBatchManager}
+        onClose={() => setShowBatchManager(false)}
+        onSuccess={() => {
+          setShowBatchManager(false);
+          loadAppointments();
+        }}
+      />
+
+      {/* 增强日历对话框 */}
+      <Dialog open={showEnhancedCalendar} onOpenChange={setShowEnhancedCalendar}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              高级日历视图
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <EnhancedCalendarSelector
+              selectedDate=""
+              selectedTime=""
+              availableSlots={[]} // 这里可以传入实际的可用时间槽数据
+              existingAppointments={appointments.map(apt => ({
+                date: apt.date,
+                time: apt.time,
+                duration: 60, // 默认时长
+                studentName: apt.studentName || '',
+                subject: apt.subject,
+                status: apt.status as 'pending' | 'confirmed' | 'cancelled'
+              }))}
+              onDateSelect={() => {}}
+              onTimeSelect={() => {}}
+              onConflictDetected={(conflicts) => {
+                if (conflicts.length > 0) {
+                  showError('检测到冲突', `发现 ${conflicts.length} 个时间冲突`);
+                }
+              }}
+              showConflictWarnings={true}
+              multiSelectMode={false}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

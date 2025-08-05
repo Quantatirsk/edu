@@ -1,7 +1,9 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { subscribeWithSelector } from 'zustand/middleware';
+import { useMemo } from 'react';
 import type { Appointment } from '../types';
+import { apiRequest } from '../utils/api';
 
 // 预约状态类型
 export type AppointmentStatus = 
@@ -356,22 +358,17 @@ export const useAppointmentStore = create<AppointmentState & AppointmentActions>
           });
         },
         
-        // 预约操作 (这些会在实际API集成时实现)
+        // 预约操作 - 使用真实API调用
         createAppointment: async (appointmentData) => {
           get().setCreating(true);
           get().setCreateError(null);
           
           try {
-            // 模拟API调用
-            const newAppointment: Appointment = {
-              ...appointmentData,
-              id: generateId(),
-              status: 'pending',
-              createdAt: new Date().toISOString().split('T')[0],
-              updatedAt: new Date().toISOString().split('T')[0],
-            };
-            
+            // 调用真实API
+            const newAppointment = await apiRequest.post('/appointments', appointmentData);
             get().addAppointment(newAppointment);
+            
+            return newAppointment;
           } catch (error) {
             get().setCreateError((error as Error).message);
             throw error;
@@ -718,36 +715,87 @@ export const useAllAppointments = () => useAppointmentStore((state) => state.app
 export const useSelectedAppointment = () => useAppointmentStore((state) => state.selectedAppointment);
 export const useAppointmentFilters = () => useAppointmentStore((state) => state.filters);
 export const useAppointmentSort = () => useAppointmentStore((state) => state.sortBy);
-export const useAppointmentLoading = () => useAppointmentStore((state) => ({
-  isLoading: state.isLoading,
-  isLoadingMore: state.isLoadingMore,
-  hasMore: state.hasMore,
-  isCreating: state.isCreating,
-  updatingIds: state.updatingIds,
-}));
-export const useAppointmentErrors = () => useAppointmentStore((state) => ({
-  createError: state.createError,
-  updateErrors: state.updateErrors,
-}));
+export const useAppointmentLoading = () => {
+  const isLoading = useAppointmentStore((state) => state.isLoading);
+  const isLoadingMore = useAppointmentStore((state) => state.isLoadingMore);
+  const hasMore = useAppointmentStore((state) => state.hasMore);
+  const isCreating = useAppointmentStore((state) => state.isCreating);
+  const updatingIds = useAppointmentStore((state) => state.updatingIds);
+  
+  return useMemo(() => ({
+    isLoading,
+    isLoadingMore,
+    hasMore,
+    isCreating,
+    updatingIds,
+  }), [isLoading, isLoadingMore, hasMore, isCreating, updatingIds]);
+};
+export const useAppointmentErrors = () => {
+  const createError = useAppointmentStore((state) => state.createError);
+  const updateErrors = useAppointmentStore((state) => state.updateErrors);
+  
+  return useMemo(() => ({
+    createError,
+    updateErrors,
+  }), [createError, updateErrors]);
+};
 export const useAppointmentStatistics = () => useAppointmentStore((state) => state.statistics);
 
-// 操作 Hooks
-export const useAppointmentActions = () => useAppointmentStore((state) => ({
-  setAppointments: state.setAppointments,
-  selectAppointment: state.selectAppointment,
-  selectAppointmentById: state.selectAppointmentById,
-  setFilters: state.setFilters,
-  resetFilters: state.resetFilters,
-  setSearchQuery: state.setSearchQuery,
-  setSortBy: state.setSortBy,
-  createAppointment: state.createAppointment,
-  confirmAppointment: state.confirmAppointment,
-  cancelAppointment: state.cancelAppointment,
-  rescheduleAppointment: state.rescheduleAppointment,
-  completeAppointment: state.completeAppointment,
-  getAppointmentsByStatus: state.getAppointmentsByStatus,
-  getUpcomingAppointments: state.getUpcomingAppointments,
-  canCancelAppointment: state.canCancelAppointment,
-  canRescheduleAppointment: state.canRescheduleAppointment,
-  isAppointmentConflict: state.isAppointmentConflict,
-}));
+// 操作 Hooks - 使用 useMemo 稳定化返回对象
+export const useAppointmentActions = () => {
+  const setAppointments = useAppointmentStore((state) => state.setAppointments);
+  const selectAppointment = useAppointmentStore((state) => state.selectAppointment);
+  const selectAppointmentById = useAppointmentStore((state) => state.selectAppointmentById);
+  const setFilters = useAppointmentStore((state) => state.setFilters);
+  const resetFilters = useAppointmentStore((state) => state.resetFilters);
+  const setSearchQuery = useAppointmentStore((state) => state.setSearchQuery);
+  const setSortBy = useAppointmentStore((state) => state.setSortBy);
+  const createAppointment = useAppointmentStore((state) => state.createAppointment);
+  const confirmAppointment = useAppointmentStore((state) => state.confirmAppointment);
+  const cancelAppointment = useAppointmentStore((state) => state.cancelAppointment);
+  const rescheduleAppointment = useAppointmentStore((state) => state.rescheduleAppointment);
+  const completeAppointment = useAppointmentStore((state) => state.completeAppointment);
+  const getAppointmentsByStatus = useAppointmentStore((state) => state.getAppointmentsByStatus);
+  const getUpcomingAppointments = useAppointmentStore((state) => state.getUpcomingAppointments);
+  const canCancelAppointment = useAppointmentStore((state) => state.canCancelAppointment);
+  const canRescheduleAppointment = useAppointmentStore((state) => state.canRescheduleAppointment);
+  const isAppointmentConflict = useAppointmentStore((state) => state.isAppointmentConflict);
+
+  return useMemo(() => ({
+    setAppointments,
+    selectAppointment,
+    selectAppointmentById,
+    setFilters,
+    resetFilters,
+    setSearchQuery,
+    setSortBy,
+    createAppointment,
+    confirmAppointment,
+    cancelAppointment,
+    rescheduleAppointment,
+    completeAppointment,
+    getAppointmentsByStatus,
+    getUpcomingAppointments,
+    canCancelAppointment,
+    canRescheduleAppointment,
+    isAppointmentConflict,
+  }), [
+    setAppointments,
+    selectAppointment,
+    selectAppointmentById,
+    setFilters,
+    resetFilters,
+    setSearchQuery,
+    setSortBy,
+    createAppointment,
+    confirmAppointment,
+    cancelAppointment,
+    rescheduleAppointment,
+    completeAppointment,
+    getAppointmentsByStatus,
+    getUpcomingAppointments,
+    canCancelAppointment,
+    canRescheduleAppointment,
+    isAppointmentConflict,
+  ]);
+};

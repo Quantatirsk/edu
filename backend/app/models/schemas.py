@@ -22,6 +22,7 @@ class AppointmentStatus(str, Enum):
 
 class LessonType(str, Enum):
     SINGLE = "single"
+    ONE_ON_ONE = "one-on-one"
     PACKAGE = "package"
 
 # 基础数据模型

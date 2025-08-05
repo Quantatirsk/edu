@@ -1,4 +1,5 @@
 import React from 'react';
+import { useUIStore } from '../stores/uiStore';
 
 // Toast类型定义
 export interface ToastItem {
@@ -19,23 +20,34 @@ export interface ToastItem {
 // 创建Toast context（暂未使用）
 // const ToastContext = React.createContext<ToastContextType | undefined>(undefined);
 
-// 简单的useToast hook（不依赖Provider）
+// useToast hook 连接到 UI Store
 export const useToast = () => {
-  const [toasts, setToasts] = React.useState<ToastItem[]>([]);
+  const notifications = useUIStore((state) => state.notifications);
+  const removeNotification = useUIStore((state) => state.removeNotification);
 
-  const addToast = React.useCallback((toast: Omit<ToastItem, 'id'>) => {
-    const id = Math.random().toString(36).substring(2, 11);
-    setToasts(prev => [...prev, { ...toast, id }]);
-    
-    // 自动移除toast（5秒后）
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
-    }, 5000);
-  }, []);
+  // 将 UI Store notifications 转换为 toast 格式
+  const toasts: ToastItem[] = React.useMemo(() => {
+    return notifications.map(notification => ({
+      id: notification.id,
+      title: notification.title,
+      description: notification.message,
+      variant: notification.type === 'error' ? 'destructive' : 'default'
+    }));
+  }, [notifications]);
 
   const removeToast = React.useCallback((id: string) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
-  }, []);
+    removeNotification(id);
+  }, [removeNotification]);
 
-  return { toasts, addToast: addToast, removeToast };
+  // 为了兼容性，也提供 addToast 方法
+  const addNotification = useUIStore((state) => state.addNotification);
+  const addToast = React.useCallback((toast: Omit<ToastItem, 'id'>) => {
+    addNotification({
+      type: toast.variant === 'destructive' ? 'error' : 'success',
+      title: toast.title || '',
+      message: toast.description
+    });
+  }, [addNotification]);
+
+  return { toasts, addToast, removeToast };
 };
